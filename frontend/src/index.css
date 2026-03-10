@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-[#F5F0E8] text-[#2C2C2C];
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-normal;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .btn-primary {
+    @apply bg-[#8B5A2B] text-white px-6 py-3 rounded-md hover:bg-[#6B431F] 
+           transition-all duration-200 font-medium shadow-sm hover:shadow-md
+           focus:outline-none focus:ring-2 focus:ring-[#8B5A2B] focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-[#9CAF88] text-white px-6 py-3 rounded-md hover:bg-[#7E8E6D] 
+           transition-all duration-200 font-medium shadow-sm hover:shadow-md
+           focus:outline-none focus:ring-2 focus:ring-[#9CAF88] focus:ring-offset-2;
+  }
+  
+  .btn-outline {
+    @apply border border-[#8B5A2B] text-[#8B5A2B] px-6 py-3 rounded-md 
+           hover:bg-[#8B5A2B] hover:text-white transition-all duration-200 
+           font-medium focus:outline-none focus:ring-2 focus:ring-[#8B5A2B] focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow 
+           duration-200 overflow-hidden border border-[#E8E0D5];
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 border border-[#D4C9BC] rounded-md focus:outline-none 
+           focus:ring-1 focus:ring-[#8B5A2B] focus:border-[#8B5A2B] bg-white;
+  }
+
+  .badge {
+    @apply px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-[#8B5A2B] text-white;
+  }
+
+  .badge-secondary {
+    @apply bg-[#9CAF88] text-white;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#E8E0D5];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[#B8A99A] rounded-full hover:bg-[#9B8A7A] transition-colors;
+}
+
+/* Loading animation */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Line clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

@@ -1,0 +1,388 @@
+.product-details-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Product Images Section */
+.product-images {
+  padding: 2rem;
+}
+
+.main-image {
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 1px solid #eee;
+}
+
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-images {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.thumbnail {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.thumbnail:hover {
+  transform: translateY(-2px);
+}
+
+.thumbnail.active {
+  border-color: #8B4513;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Product Info Section */
+.product-info {
+  padding: 2rem;
+}
+
+.product-info h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.product-category {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  text-transform: capitalize;
+}
+
+.product-price {
+  font-size: 2rem;
+  color: #8B4513;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+/* Description Section */
+.product-description,
+.product-specifications {
+  margin-bottom: 2rem;
+}
+
+.product-description h3,
+.product-specifications h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #8B4513;
+  padding-bottom: 0.5rem;
+}
+
+.product-description p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.product-specifications ul {
+  list-style: none;
+  padding: 0;
+}
+
+.product-specifications li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  color: #555;
+}
+
+.product-specifications li:last-child {
+  border-bottom: none;
+}
+
+.product-specifications strong {
+  color: #333;
+  width: 120px;
+  display: inline-block;
+}
+
+/* Product Actions */
+.product-actions {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #eee;
+}
+
+.quantity-selector {
+  margin-bottom: 1.5rem;
+}
+
+.quantity-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.quantity-selector input {
+  width: 100px;
+  padding: 0.8rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.quantity-selector input:focus {
+  outline: none;
+  border-color: #8B4513;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.add-to-cart-btn,
+.wishlist-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.add-to-cart-btn {
+  background: #8B4513;
+  color: white;
+  flex: 2;
+}
+
+.add-to-cart-btn:hover {
+  background: #654321;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.3);
+}
+
+.wishlist-btn {
+  background: #fff;
+  color: #8B4513;
+  border: 2px solid #8B4513;
+  flex: 1;
+}
+
+.wishlist-btn:hover {
+  background: #8B4513;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* Not Found State */
+.not-found {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.5rem;
+  color: #d32f2f;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .product-details-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .product-info h1 {
+    font-size: 2rem;
+  }
+
+  .main-image {
+    height: 300px;
+  }
+
+  .thumbnail {
+    width: 60px;
+    height: 60px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .add-to-cart-btn,
+  .wishlist-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-details-container {
+    padding: 0.5rem;
+  }
+
+  .product-info {
+    padding: 1rem;
+  }
+
+  .product-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .product-price {
+    font-size: 1.5rem;
+  }
+
+  .main-image {
+    height: 250px;
+  }
+
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .product-actions,
+  .thumbnail-images {
+    display: none;
+  }
+
+  .product-details-container {
+    box-shadow: none;
+  }
+}
+/* Add this to your existing ProductDetailsPage.css */
+.login-warning {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  color: #856404;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.login-warning a {
+  color: #8B4513;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.login-warning a:hover {
+  text-decoration: underline;
+}
+
+.wishlist-btn.active {
+  background: #8B4513;
+  color: white;
+}
+
+.text-red-500 {
+  color: #ff4444;
+}
+
+.wishlist-btn.active .text-red-500 {
+  color: white;
+}
+/* Add these styles for the Buy Now button */
+.buy-now-btn {
+  padding: 1rem 2rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.buy-now-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.qty-btn {
+  background: #8B5A2B;
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  font-size: 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.qty-value {
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: center;
+}
+.customization-section{
+margin-top:25px;
+padding:20px;
+border-radius:12px;
+background:#f9f6f1;
+border:1px solid #e3dcd2;
+}
+
+.custom-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.custom-box{
+display:flex;
+flex-direction:column;
+gap:8px;
+}
