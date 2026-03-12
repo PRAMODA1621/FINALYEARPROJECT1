@@ -21,50 +21,26 @@ const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 200,
-  message: 'Too many requests, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true
-});
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: 'Too many login attempts, please try again later.',
-  skipSuccessfulRequests: true
-});
-
-// CORS configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-  'https://venus-frontend-guqs.onrender.com'
-];
+// ------------------
+// CORS MUST COME FIRST
+// ------------------
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("Blocked origin:", origin);
-    return callback(null, true); // allow instead of throwing error
-  },
-  credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://venus-frontend-guqs.onrender.com"
+  ],
+  credentials: true
 }));
 
-// Handle preflight requests
 app.options('*', cors());
+
+
+// ------------------
+// Security + middleware
+// ------------------
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -75,20 +51,47 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
+
+// ------------------
+// Rate limiting
+// ------------------
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20
+});
+
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/', limiter);
 
-// Serve static files
+
+// ------------------
+// Static files
+// ------------------
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, '../frontend/public/images')));
 
+
+// ------------------
 // Health check
+// ------------------
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Routes
+
+// ------------------
+// API Routes
+// ------------------
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
@@ -100,15 +103,24 @@ app.use('/api/helpdesk', helpdeskRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// 404 handler
+
+// ------------------
+// 404
+// ------------------
+
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
+
+// ------------------
 // Error handler
+// ------------------
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, message: 'Server error' });
 });
+
 
 module.exports = app;
