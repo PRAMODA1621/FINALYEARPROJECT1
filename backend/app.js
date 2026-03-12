@@ -18,6 +18,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const helpdeskRoutes = require('./routes/helpdeskRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+
 const app = express();
 
 // Rate limiting
@@ -47,18 +48,23 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
       console.log('Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -77,15 +83,15 @@ app.use('/api/', limiter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, '../frontend/public/images')));
 
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Routes
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes);  // This line MUST be present
+app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
@@ -93,6 +99,7 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/helpdesk', helpdeskRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/reviews', reviewRoutes);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
