@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "/api";
+const API_URL = "https://finalyearproject1-pvex.onrender.com/api";
 const apiClient = axios.create({
   baseURL: API_URL,
   timeout: 10000,

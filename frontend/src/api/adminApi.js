@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "/api";
+const API_URL = "https://finalyearproject1-pvex.onrender.com/api";
 // Get auth token
 const getToken = () => {
   return localStorage.getItem('token');

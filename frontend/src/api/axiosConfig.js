@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = "/api";
+const API_URL = "https://finalyearproject1-pvex.onrender.com/api";
 const axiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 10000,
