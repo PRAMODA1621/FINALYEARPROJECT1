@@ -22,28 +22,34 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const app = express();
 
 
-// ------------------
-// CORS MUST COME FIRST
-// ------------------
+// ==============================
+// CORS (MUST BE FIRST)
+// ==============================
 
-const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://venus-frontend-guqs.onrender.com"
-  ],
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
+// Force CORS headers for every request
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://venus-frontend-guqs.onrender.com");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// Also enable cors middleware
+app.use(cors({
+  origin: "https://venus-frontend-guqs.onrender.com",
   credentials: true
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+}));
 
 
-// ------------------
-// Security + middleware
-// ------------------
+// ==============================
+// SECURITY & MIDDLEWARE
+// ==============================
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -55,9 +61,9 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 
-// ------------------
-// Rate limiting
-// ------------------
+// ==============================
+// RATE LIMITING
+// ==============================
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -74,17 +80,17 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/', limiter);
 
 
-// ------------------
-// Static files
-// ------------------
+// ==============================
+// STATIC FILES
+// ==============================
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, '../frontend/public/images')));
 
 
-// ------------------
-// Health check
-// ------------------
+// ==============================
+// HEALTH CHECK
+// ==============================
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -94,9 +100,9 @@ app.get('/health', (req, res) => {
 });
 
 
-// ------------------
-// API Routes
-// ------------------
+// ==============================
+// API ROUTES
+// ==============================
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -110,9 +116,9 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 
-// ------------------
-// 404 handler
-// ------------------
+// ==============================
+// 404 HANDLER
+// ==============================
 
 app.use((req, res) => {
   res.status(404).json({
@@ -122,9 +128,9 @@ app.use((req, res) => {
 });
 
 
-// ------------------
-// Error handler
-// ------------------
+// ==============================
+// ERROR HANDLER
+// ==============================
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
