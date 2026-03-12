@@ -37,7 +37,7 @@ class SalesBot:
         self.categories = ["Wooden", "Acrylic", "Metal", "Gifts", "Mementos", "Marble"]
         
         # Backend API URL
-        self.api_url = "http://localhost:5000/api"
+        self.api_url = "https://finalyearproject1-pvex.onrender.com/api"
         
         # Language options
         self.languages = ["English", "ಕನ್ನಡ (Kannada)"]

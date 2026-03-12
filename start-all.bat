@@ -19,7 +19,7 @@ echo.
 echo ======================================== 
 echo All services started! 
 echo Frontend: http://localhost:5174 
-echo Backend: http://localhost:5000 
+echo Backend: https://finalyearproject1-pvex.onrender.com 
 echo Chatbot: http://localhost:8000 
 echo Recommendation: http://localhost:8001 
 echo ======================================== 

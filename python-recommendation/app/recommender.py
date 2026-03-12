@@ -23,7 +23,7 @@ class RecommenderEngine:
         self.tfidf_vectorizer = None
         self.feature_matrix = None
         self.backend_api = httpx.AsyncClient(
-            base_url=os.getenv("BACKEND_API_URL", "http://localhost:5000/api"),
+            base_url=os.getenv("BACKEND_API_URL", "https://finalyearproject1-pvex.onrender.com/api"),
             timeout=float(os.getenv("BACKEND_API_TIMEOUT", 10))
         )
         self.similarity_threshold = float(os.getenv("SIMILARITY_THRESHOLD", 0.3))

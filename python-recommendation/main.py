@@ -15,7 +15,7 @@ app = FastAPI(title="Venus Enterprises Recommendation Engine")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5000"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "https://finalyearproject1-pvex.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

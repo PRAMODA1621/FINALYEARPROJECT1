@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Backend API client
 backend_api = httpx.AsyncClient(
-    base_url=os.getenv("BACKEND_API_URL", "http://localhost:5000/api"),
+    base_url=os.getenv("BACKEND_API_URL", "https://finalyearproject1-pvex.onrender.com/api"),
     timeout=float(os.getenv("BACKEND_API_TIMEOUT", 10))
 )
 
