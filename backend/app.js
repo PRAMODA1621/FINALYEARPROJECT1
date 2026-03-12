@@ -22,7 +22,7 @@ const app = express();
 
 
 // ---------------------
-// ALLOW ALL ORIGINS (NO CORS BLOCKING)
+// CORS (ALLOW EVERYTHING)
 // ---------------------
 
 app.use(cors());
@@ -35,7 +35,7 @@ app.options("*", cors());
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: false
   })
 );
 
@@ -69,10 +69,7 @@ app.use("/api", limiter);
 // ---------------------
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(
-  "/images",
-  express.static(path.join(__dirname, "../frontend/public/images"))
-);
+app.use("/images", express.static(path.join(__dirname, "../frontend/public/images")));
 
 
 // ---------------------
