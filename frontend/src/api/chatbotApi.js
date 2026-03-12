@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:8000/api';
-
+const CHATBOT_URL = "/api/chatbot";
 const chatbotApi = {
   // Send message to chatbot
   sendMessage: async (message, sessionId = null) => {
