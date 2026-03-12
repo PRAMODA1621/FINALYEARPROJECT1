@@ -22,18 +22,11 @@ const app = express();
 
 
 // ---------------------
-// CORS CONFIGURATION
+// ALLOW ALL ORIGINS (NO CORS BLOCKING)
 // ---------------------
 
-const corsOptions = {
-  origin: "https://venus-frontend-guqs.onrender.com",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.use(cors());
+app.options("*", cors());
 
 
 // ---------------------
