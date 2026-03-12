@@ -99,7 +99,11 @@ app.use("/api/helpdesk", helpdeskRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/reviews", reviewRoutes);
 
+app.use(express.static(path.join(__dirname, "dist")));
 
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 // ---------------------
 // 404 HANDLER
 // ---------------------
