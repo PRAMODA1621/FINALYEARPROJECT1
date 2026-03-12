@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCart } from '../../contexts/Cartcontext';
+import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { 
   FaShoppingCart, FaHeart, FaUser, FaSearch, FaBars, FaTimes, 

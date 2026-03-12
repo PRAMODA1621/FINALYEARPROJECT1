@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaComments, FaTimes, FaPaperPlane, FaRobot, FaSmile, FaShoppingCart, FaEye } from 'react-icons/fa';
-import { useCart } from '../../contexts/Cartcontext';
+import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import chatbotApi from '../../api/chatbotApi';
 import toast from 'react-hot-toast';

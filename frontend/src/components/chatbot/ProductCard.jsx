@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../contexts/Cartcontext';
+import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaShoppingCart, FaEye } from 'react-icons/fa';
 import toast from 'react-hot-toast';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductByName } from '../api/productApi';
-import { useCart } from '../contexts/Cartcontext';
+import { useCart } from '../contexts/CartContext';
 import { addToWishlist } from '../api/wishlistApi';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';

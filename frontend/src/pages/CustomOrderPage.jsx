@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../contexts/Cartcontext';
+import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { 
