@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://finalyearproject1-pvex.onrender.com/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 export const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:8000/api';
 export const RECOMMENDATION_URL = import.meta.env.VITE_RECOMMENDATION_URL || 'http://localhost:8001/api';
 

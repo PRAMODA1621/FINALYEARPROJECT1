@@ -1,7 +1,7 @@
 // Add this to your browser console to check the API response
 export const debugAPI = async () => {
   try {
-    const response = await fetch('https://finalyearproject1-pvex.onrender.com/api/products/featured');
+    const response = await fetch('/api/products/featured');
     const data = await response.json();
     console.log('API Response:', data);
     

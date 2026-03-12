@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://finalyearproject1-pvex.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const WishlistContext = createContext();
 

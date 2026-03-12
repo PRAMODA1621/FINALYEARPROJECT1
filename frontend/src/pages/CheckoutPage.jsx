@@ -90,7 +90,7 @@ const CheckoutPage = () => {
         console.log('Creating Buy Now order:', orderData);
       }
 
-      const response = await axios.post('https://finalyearproject1-pvex.onrender.com/api/orders', orderData, {
+      const response = await axios.post('/api/orders', orderData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
