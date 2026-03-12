@@ -26,16 +26,19 @@ const app = express();
 // CORS MUST COME FIRST
 // ------------------
 
-app.use(cors({
+const corsOptions = {
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
     "https://venus-frontend-guqs.onrender.com"
   ],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
   credentials: true
-}));
+};
 
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 
 // ------------------
@@ -84,7 +87,10 @@ app.use('/images', express.static(path.join(__dirname, '../frontend/public/image
 // ------------------
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
 });
 
 
@@ -105,11 +111,14 @@ app.use('/api/reviews', reviewRoutes);
 
 
 // ------------------
-// 404
+// 404 handler
 // ------------------
 
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
 
@@ -119,8 +128,10 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ success: false, message: 'Server error' });
+  res.status(500).json({
+    success: false,
+    message: 'Server error'
+  });
 });
-
 
 module.exports = app;
