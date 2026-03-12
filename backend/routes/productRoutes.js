@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const { 
   getProducts, 
   getProductById,
@@ -8,11 +9,16 @@ const {
   getCategories 
 } = require('../controllers/productController');
 
-// IMPORTANT: Order matters - specific routes before dynamic ones
+
+// Specific routes FIRST
 router.get('/featured', getFeaturedProducts);
 router.get('/categories', getCategories);
 router.get('/name/:name', getProductByName);
-router.get('/:id', getProductById);
+
+// Get all products
 router.get('/', getProducts);
+
+// Dynamic route LAST
+router.get('/:id', getProductById);
 
 module.exports = router;
