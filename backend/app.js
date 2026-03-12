@@ -22,15 +22,18 @@ const app = express();
 
 
 // ---------------------
-// SIMPLE CORS (FINAL FIX)
+// CORS CONFIGURATION
 // ---------------------
 
-app.use(cors({
+const corsOptions = {
   origin: "https://venus-frontend-guqs.onrender.com",
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
 
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 
 // ---------------------
@@ -108,7 +111,7 @@ app.use("/api/reviews", reviewRoutes);
 
 
 // ---------------------
-// 404
+// 404 HANDLER
 // ---------------------
 
 app.use((req, res) => {
