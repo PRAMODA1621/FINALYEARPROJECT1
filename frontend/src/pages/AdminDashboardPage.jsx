@@ -54,10 +54,10 @@ const AdminDashboardPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [statsRes, usersRes, ordersRes, productsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/dashboard', { headers }).catch(() => ({ data: { data: {} } })),
-        axios.get('http://localhost:5000/api/admin/users', { headers }).catch(() => ({ data: { data: [] } })),
-        axios.get('http://localhost:5000/api/admin/orders', { headers }).catch(() => ({ data: { data: [] } })),
-        axios.get('http://localhost:5000/api/admin/products', { headers }).catch(() => ({ data: { data: [] } }))
+        axios.get('https://finalyearproject1-pvex.onrender.com/api/admin/dashboard', { headers }).catch(() => ({ data: { data: {} } })),
+        axios.get('https://finalyearproject1-pvex.onrender.com/api/admin/users', { headers }).catch(() => ({ data: { data: [] } })),
+        axios.get('https://finalyearproject1-pvex.onrender.com/api/admin/orders', { headers }).catch(() => ({ data: { data: [] } })),
+        axios.get('https://finalyearproject1-pvex.onrender.com/api/admin/products', { headers }).catch(() => ({ data: { data: [] } }))
       ]);
 
       setStats(statsRes.data.data || {});
@@ -106,7 +106,7 @@ const AdminDashboardPage = () => {
   const handleUpdateUser = async (userId, userData) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/admin/users/${userId}`, userData, {
+      await axios.put(`https://finalyearproject1-pvex.onrender.com/api/admin/users/${userId}`, userData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('User updated successfully');
@@ -120,7 +120,7 @@ const AdminDashboardPage = () => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
+      await axios.delete(`https://finalyearproject1-pvex.onrender.com/api/admin/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('User deleted successfully');
@@ -133,7 +133,7 @@ const AdminDashboardPage = () => {
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/admin/orders/${orderId}/status`, { status }, {
+      await axios.put(`https://finalyearproject1-pvex.onrender.com/api/admin/orders/${orderId}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Order status updated successfully');
@@ -147,7 +147,7 @@ const AdminDashboardPage = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/admin/products/${productId}`, {
+      await axios.delete(`https://finalyearproject1-pvex.onrender.com/api/admin/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Product deleted successfully');

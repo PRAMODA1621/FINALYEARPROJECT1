@@ -15,7 +15,7 @@ const WorkingChatbot = () => {
   const [products, setProducts] = useState([]);
   const [step, setStep] = useState('greeting'); // greeting, category, price, showing
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://finalyearproject1-pvex.onrender.com/api';
 
   // Fetch products based on category and price
   const fetchProducts = async (category, minPrice = 0, maxPrice = 99999) => {

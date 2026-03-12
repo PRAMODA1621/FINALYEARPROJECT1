@@ -47,7 +47,7 @@ const HelpdeskPage = () => {
 
   const fetchTickets = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/helpdesk/tickets', {
+      const response = await axios.get('https://finalyearproject1-pvex.onrender.com/api/helpdesk/tickets', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -67,7 +67,7 @@ const HelpdeskPage = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/helpdesk/tickets', formData, {
+      const response = await axios.post('https://finalyearproject1-pvex.onrender.com/api/helpdesk/tickets', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
