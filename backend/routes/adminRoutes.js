@@ -18,8 +18,9 @@ const {
   updateTicketStatus
 } = require('../controllers/helpdeskController');
 const { protect, admin } = require('../middleware/authMiddleware');
-
+const { getAllTickets } = require('../controllers/helpdeskController');
 // All admin routes require authentication and admin role
+const { updateTicketStatus } = require('../controllers/helpdeskController');
 router.use(protect, admin);
 
 // Dashboard
@@ -44,5 +45,6 @@ router.delete('/products/:id', deleteProduct);
 router.get('/helpdesk/tickets', getAllTickets);
 router.post('/helpdesk/tickets/:id/reply', replyToTicket);
 router.put('/helpdesk/tickets/:id/status', updateTicketStatus);
-
+router.get('/helpdesk/tickets', getAllTickets);
+router.put('/helpdesk/tickets/:id/status', updateTicketStatus);
 module.exports = router;

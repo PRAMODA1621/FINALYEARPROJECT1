@@ -166,6 +166,30 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
     logout();
     navigate('/');
   };
+  const handleCloseTicket = async (ticketId) => {
+  try {
+
+    const token = localStorage.getItem("token");
+
+    await axios.put(
+      `${API_URL}/api/admin/helpdesk/tickets/${ticketId}/status`,
+      { status: "closed" },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    toast.success("Ticket closed");
+
+    fetchDashboardData();
+
+  } catch (error) {
+
+    console.error("Close ticket error:", error);
+    toast.error("Failed to close ticket");
+
+  }
+};
 
   const getStatusColor = (status) => {
     const colors = {
@@ -207,7 +231,7 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
   const lowStockProducts = products.filter(p => p.stock < 10).length;
   const activeUsers = users.filter(u => u.is_active).length;
   const inactiveUsers = users.filter(u => !u.is_active).length;
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-[#E8DDD0] flex items-center justify-center">
@@ -629,7 +653,7 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
             </div>
           </motion.div>
         )}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 mt-6">
+     <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 mt-6">
   <h3 className="text-lg font-semibold text-[#8B5A2B] mb-4">
     Support Tickets
   </h3>
@@ -640,11 +664,19 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
     <div className="space-y-3">
       {tickets.slice(0,5).map(ticket => (
         <div key={ticket.id} className="border border-[#E8E0D5] rounded-md p-4">
-          <div className="flex justify-between">
+
+          <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-[#8B5A2B]">
               {ticket.subject}
             </span>
-            <span className="text-xs text-gray-500">
+
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              ticket.status === "open"
+                ? "bg-green-100 text-green-800"
+                : ticket.status === "in_progress"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-gray-100 text-gray-800"
+            }`}>
               {ticket.status}
             </span>
           </div>
@@ -656,6 +688,16 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
           <p className="text-sm text-gray-600 mt-1">
             {ticket.message}
           </p>
+
+          {ticket.status !== "closed" && (
+            <button
+              onClick={() => handleCloseTicket(ticket.id)}
+              className="mt-3 text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+            >
+              Close Ticket
+            </button>
+          )}
+
         </div>
       ))}
     </div>
