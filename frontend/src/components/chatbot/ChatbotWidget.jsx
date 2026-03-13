@@ -26,7 +26,7 @@ const ChatbotWidget = () => {
     
     // Start chat with empty message to get language selection
     setTimeout(() => {
-      sendMessageToBot('start');
+      sendMessageToBot('');
     }, 500);
   }, []);
 
@@ -77,8 +77,8 @@ const ChatbotWidget = () => {
       }
       
     } catch (error) {
-      console.error('Chatbot error:', error);
-      setConnectionError(true);
+  console.error('Chatbot error:', error);
+  setConnectionError(false);
       
       const errorMessage = {
         id: Date.now(),
