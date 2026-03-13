@@ -629,7 +629,38 @@ await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        header
             </div>
           </motion.div>
         )}
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 mt-6">
+  <h3 className="text-lg font-semibold text-[#8B5A2B] mb-4">
+    Support Tickets
+  </h3>
 
+  {tickets.length === 0 ? (
+    <p className="text-sm text-gray-500">No support tickets found.</p>
+  ) : (
+    <div className="space-y-3">
+      {tickets.slice(0,5).map(ticket => (
+        <div key={ticket.id} className="border border-[#E8E0D5] rounded-md p-4">
+          <div className="flex justify-between">
+            <span className="text-sm font-medium text-[#8B5A2B]">
+              {ticket.subject}
+            </span>
+            <span className="text-xs text-gray-500">
+              {ticket.status}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            {ticket.first_name} {ticket.last_name}
+          </p>
+
+          <p className="text-sm text-gray-600 mt-1">
+            {ticket.message}
+          </p>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
         {/* Products Tab */}
         {activeTab === 'products' && (
           <motion.div

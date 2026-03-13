@@ -16,54 +16,73 @@ export const useWishlist = () => {
 };
 
 export const WishlistProvider = ({ children }) => {
+
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const { isAuthenticated, token } = useAuth();
+
   const fetchTimeoutRef = useRef(null);
 
   const fetchWishlist = async () => {
-    if (!isAuthenticated || !token) return;
+
+    if (!token) return;
 
     if (fetchTimeoutRef.current) {
       clearTimeout(fetchTimeoutRef.current);
     }
 
     fetchTimeoutRef.current = setTimeout(async () => {
+
       try {
+
         setLoading(true);
 
-        const response = await axios.get(`${API_URL}/api/wishlist`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.get(
+          `${API_URL}/api/wishlist`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
 
         if (response.data.success) {
           setWishlist(response.data.data || []);
         }
 
       } catch (error) {
+
         console.error("Fetch wishlist error:", error);
+
       } finally {
+
         setLoading(false);
         fetchTimeoutRef.current = null;
+
       }
+
     }, 200);
+
   };
 
   useEffect(() => {
-    if (isAuthenticated && token) {
-      fetchWishlist();
-    } else {
+
+    if (!isAuthenticated || !token) {
       setWishlist([]);
+      return;
     }
+
+    fetchWishlist();
 
     return () => {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
     };
-  }, [isAuthenticated, token]);
+
+  }, [token]); // FIXED dependency (prevents flashing)
 
   const addToWishlist = async (product) => {
+
     if (!isAuthenticated) {
       toast.error("Please login to add to wishlist");
       return;
@@ -71,7 +90,10 @@ export const WishlistProvider = ({ children }) => {
 
     try {
 
-      const productName = typeof product === "string" ? product : product.name;
+      const productName =
+        typeof product === "string"
+          ? product
+          : product.name;
 
       const response = await axios.post(
         `${API_URL}/api/wishlist`,
@@ -86,15 +108,23 @@ export const WishlistProvider = ({ children }) => {
         await fetchWishlist();
 
         toast.success("Added to wishlist");
+
       }
 
     } catch (error) {
+
       console.error("Add to wishlist error:", error);
-      toast.error(error.response?.data?.message || "Failed to add to wishlist");
+
+      toast.error(
+        error.response?.data?.message || "Failed to add to wishlist"
+      );
+
     }
+
   };
 
   const removeFromWishlist = async (itemId) => {
+
     try {
 
       const response = await axios.delete(
@@ -106,27 +136,46 @@ export const WishlistProvider = ({ children }) => {
 
       if (response.data.success) {
 
-        setWishlist(prev => prev.filter(item => item._id !== itemId));
+        setWishlist(prev =>
+          prev.filter(item => item.id !== itemId) // FIXED id field
+        );
 
         toast.success("Removed from wishlist");
+
       }
 
     } catch (error) {
+
       console.error("Remove wishlist error:", error);
-      toast.error(error.response?.data?.message || "Failed to remove wishlist");
+
+      toast.error(
+        error.response?.data?.message || "Failed to remove wishlist"
+      );
+
     }
+
   };
 
   const checkInWishlist = (productName) => {
-    return wishlist.some(item => item.product?.name === productName);
+
+    return wishlist.some(
+      item => item.product_name === productName // FIXED field
+    );
+
   };
 
   const getWishlistItemId = (productName) => {
-    const item = wishlist.find(item => item.product?.name === productName);
-    return item?._id;
+
+    const item = wishlist.find(
+      item => item.product_name === productName // FIXED field
+    );
+
+    return item?.id;
+
   };
 
   const value = {
+
     wishlist,
     loading,
     addToWishlist,
@@ -134,6 +183,7 @@ export const WishlistProvider = ({ children }) => {
     checkInWishlist,
     getWishlistItemId,
     refreshWishlist: fetchWishlist
+
   };
 
   return (
@@ -141,4 +191,5 @@ export const WishlistProvider = ({ children }) => {
       {children}
     </WishlistContext.Provider>
   );
+
 };

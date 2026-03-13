@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 const API_URL = "https://finalyearproject1-pvex.onrender.com/api";
 const axiosInstance = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
