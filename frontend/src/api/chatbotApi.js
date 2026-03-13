@@ -12,7 +12,7 @@ const chatbotApi = {
       message
     });
 
-    return response.data;
+    return response.data;   // backend returns { reply: "..." }
 
   }
 
