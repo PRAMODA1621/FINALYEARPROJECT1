@@ -25,7 +25,7 @@ const app = express();
 // CORS (ALLOW EVERYTHING)
 // ---------------------
 
-const cors = require("cors");
+
 
 app.use(cors({
   origin: [
