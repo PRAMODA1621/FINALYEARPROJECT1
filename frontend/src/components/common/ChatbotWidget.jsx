@@ -60,7 +60,7 @@ const ChatbotWidget = () => {
         response = await axios.post(`${CHATBOT_URL}/chat`, {
           message: inputMessage,
           session_id: localStorage.getItem('chatSessionId')
-        }, { timeout: 5000 });
+        }, { timeout: 60000 });
       } catch (connectionError) {
         console.log('Chatbot service not available, using fallback responses');
         // Fallback responses when Python service is not running

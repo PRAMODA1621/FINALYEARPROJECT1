@@ -28,7 +28,7 @@ const getRecommendations = async (req, res) => {
         product_name: productName,
         category: product.category,
         limit: limit
-      }, { timeout: 3000 });
+      }, { timeout:  60000});
 
       if (response.data && response.data.recommendations) {
         const recommendedNames = response.data.recommendations.map(r => r.product_name);

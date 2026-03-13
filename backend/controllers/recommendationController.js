@@ -30,7 +30,7 @@ const getProductRecommendations = async (req, res) => {
           description: product.description,
           limit: parseInt(limit)
         },
-        { timeout: 3000 }
+        { timeout: 60000 }
       );
 
       if (response.data && response.data.recommendations) {
@@ -138,7 +138,7 @@ const getPersonalizedRecommendations = async (req, res) => {
           product_ids: Array.from(userProductIds),
           limit: parseInt(limit)
         },
-        { timeout: 3000 }
+        { timeout: 60000 }
       );
 
       if (response.data && response.data.recommendations) {
