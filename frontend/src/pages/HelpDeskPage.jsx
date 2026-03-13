@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaQuestionCircle, FaTicketAlt, FaPlus } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-
+const API_URL = import.meta.env.VITE_API_URL;
 const HelpdeskPage = () => {
   const { isAuthenticated, token } = useAuth();
   const [activeTab, setActiveTab] = useState('faq');
@@ -47,7 +47,7 @@ const HelpdeskPage = () => {
 
   const fetchTickets = async () => {
     try {
-      const response = await axios.get('/api/helpdesk/tickets', {
+      const response = await axios.get('${API_URL}/api/helpdesk/tickets', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -67,7 +67,7 @@ const HelpdeskPage = () => {
     }
 
     try {
-      const response = await axios.post('/api/helpdesk/tickets', formData, {
+      const response = await axios.post('${API_URL}/api/helpdesk/tickets', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -238,4 +238,4 @@ const HelpdeskPage = () => {
   );
 };
 
-export default HelpDeskPage;
+export default HelpdeskPage;
