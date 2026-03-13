@@ -1,93 +1,230 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import List, Optional
 import uvicorn
 import logging
-from sales_bot import SalesBot, BotState
+import os
 
-# Configure logging
+# ---------------------------------------------------
+# Logging
+# ---------------------------------------------------
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Venus Enterprises FSM Sales Chatbot")
+# ---------------------------------------------------
+# FastAPI App
+# ---------------------------------------------------
 
-# Configure CORS
+app = FastAPI(title="Venus Enterprises Recommendation Engine")
+
+
+# ---------------------------------------------------
+# CORS Configuration
+# ---------------------------------------------------
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://finalyearproject1-pvex.onrender.com",
+        "https://venus-frontend-guqs.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Store bot instances per session
-bots = {}
+# ---------------------------------------------------
+# Request / Response Models
+# ---------------------------------------------------
 
-class ChatRequest(BaseModel):
-    message: Optional[str] = None
-    session_id: Optional[str] = None
+class RecommendationRequest(BaseModel):
+    product_name: str
+    category: Optional[str] = None
+    limit: int = 4
 
-class ChatResponse(BaseModel):
-    message: str
-    options: List[str] = []
-    products: List[Dict] = []
-    product: Optional[Dict] = None
-    action: Optional[str] = None
-    redirect: Optional[str] = None
-    state: int
-    type: str
-    session_id: str
+
+class RecommendationResponse(BaseModel):
+    recommendations: List[dict]
+    method: str
+
+
+# ---------------------------------------------------
+# Product Data (Mock Database)
+# ---------------------------------------------------
+
+products_by_category = {
+    "Wooden": [
+        {"product_name": "Wooden Photo Frame Plaque", "score": 0.95},
+        {"product_name": "Wooden Business Card Holder", "score": 0.92},
+        {"product_name": "Wooden Pen Stand", "score": 0.88},
+        {"product_name": "Wooden Award Plaque", "score": 0.85},
+    ],
+    "Acrylic": [
+        {"product_name": "Acrylic Trophy Award", "score": 0.94},
+        {"product_name": "Acrylic Paper Weight", "score": 0.91},
+        {"product_name": "Acrylic Plaque", "score": 0.89},
+        {"product_name": "Acrylic Desk Sign", "score": 0.87},
+    ],
+    "Metal": [
+        {"product_name": "Metal Keychain", "score": 0.93},
+        {"product_name": "Corporate Desk Clock", "score": 0.90},
+        {"product_name": "Metal Business Card Case", "score": 0.88},
+        {"product_name": "Metal Letter Opener", "score": 0.86},
+    ],
+    "Gifts": [
+        {"product_name": "Customized Coffee Mug", "score": 0.92},
+        {"product_name": "Corporate Leather Folder", "score": 0.89},
+        {"product_name": "Executive Gift Set", "score": 0.87},
+        {"product_name": "Leather Mouse Pad", "score": 0.84},
+    ],
+    "Mementos": [
+        {"product_name": "Memento of Gratitude", "score": 0.91},
+        {"product_name": "Memento of Service", "score": 0.88},
+    ],
+    "Marble": [
+        {"product_name": "Marble Paperweight", "score": 0.90},
+        {"product_name": "Marble Plaque", "score": 0.87},
+    ]
+}
+
+
+# ---------------------------------------------------
+# Cross-Category Recommendations
+# ---------------------------------------------------
+
+cross_category = {
+    "Wooden": [
+        "Acrylic LED Name Plate",
+        "Metal Engraved Pen",
+        "Corporate Gift Combo"
+    ],
+    "Acrylic": [
+        "Wooden Name Plate",
+        "Metal Keychain",
+        "Leather Diary"
+    ],
+    "Metal": [
+        "Wooden Photo Frame",
+        "Acrylic Trophy",
+        "Corporate Gift Set"
+    ],
+    "Gifts": [
+        "Engraved Pen",
+        "Leather Diary",
+        "Custom Mug"
+    ]
+}
+
+
+# ---------------------------------------------------
+# Health Endpoints
+# ---------------------------------------------------
 
 @app.get("/")
 async def root():
-    return {"message": "Venus Enterprises FSM Sales Chatbot", "status": "running"}
+    return {
+        "message": "Venus Enterprises Recommendation API",
+        "status": "running"
+    }
+
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    logger.info(f"Received message: {request.message} for session {request.session_id}")
-    
-    # Get or create bot for this session
-    session_id = request.session_id or "default"
-    if session_id not in bots:
-        bots[session_id] = SalesBot()
-        bots[session_id].session_id = session_id
-    
-    bot = bots[session_id]
-    
-    # Process message through FSM bot
-    response = bot.get_response(request.message)
-    
-    return ChatResponse(
-        message=response.get("message", ""),
-        options=response.get("options", []),
-        products=response.get("products", []),
-        product=response.get("product"),
-        action=response.get("action"),
-        redirect=response.get("redirect"),
-        state=response.get("state", 0),
-        type=response.get("type", "message"),
-        session_id=session_id
+
+# ---------------------------------------------------
+# Recommendation Endpoint
+# ---------------------------------------------------
+
+@app.post("/api/recommend", response_model=RecommendationResponse)
+async def recommend(request: RecommendationRequest):
+
+    logger.info(f"Recommendation request: {request.product_name}")
+
+    recommendations = []
+
+    # -------------------------
+    # Category Recommendations
+    # -------------------------
+
+    if request.category and request.category in products_by_category:
+
+        category_recs = products_by_category[request.category]
+
+        filtered = [
+            r for r in category_recs
+            if r["product_name"] != request.product_name
+        ]
+
+        recommendations = filtered[:request.limit]
+
+    # -------------------------
+    # Cross Category Suggestions
+    # -------------------------
+
+    if (
+        len(recommendations) < request.limit
+        and request.category in cross_category
+    ):
+
+        cross_recs = cross_category[request.category]
+
+        for rec in cross_recs:
+
+            if len(recommendations) >= request.limit:
+                break
+
+            if not any(r["product_name"] == rec for r in recommendations):
+                recommendations.append({
+                    "product_name": rec,
+                    "score": 0.75
+                })
+
+    # -------------------------
+    # Popular Fallback Products
+    # -------------------------
+
+    popular_products = [
+        {"product_name": "Engraved Wooden Name Plate", "score": 0.98},
+        {"product_name": "Metal Engraved Pen", "score": 0.97},
+        {"product_name": "Corporate Gift Combo", "score": 0.96},
+        {"product_name": "Crystal Corporate Award", "score": 0.95},
+    ]
+
+    while len(recommendations) < request.limit:
+
+        for pop in popular_products:
+
+            if len(recommendations) >= request.limit:
+                break
+
+            if not any(
+                r["product_name"] == pop["product_name"]
+                for r in recommendations
+            ):
+                recommendations.append(pop)
+
+    return RecommendationResponse(
+        recommendations=recommendations[:request.limit],
+        method="collaborative_filtering"
     )
 
-@app.post("/api/chat/reset")
-async def reset_chat(session_id: str = "default"):
-    """Reset bot for a session"""
-    if session_id in bots:
-        bots[session_id].reset()
-        return {"success": True, "message": "Chat reset"}
-    return {"success": False, "message": "Session not found"}
 
-@app.get("/api/chat/state/{session_id}")
-async def get_state(session_id: str = "default"):
-    """Get current bot state"""
-    if session_id in bots:
-        return bots[session_id].get_state()
-    return {"state": 0, "state_name": "LANGUAGE_SELECT"}
+# ---------------------------------------------------
+# Server Start
+# ---------------------------------------------------
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=False
+    )
