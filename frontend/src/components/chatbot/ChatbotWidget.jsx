@@ -302,7 +302,7 @@ const ChatbotWidget = () => {
 
   const handleViewProduct = (product) => {
     if (product.id) {
-      navigate(`/product/${product.id}`);
+      navigate(`/product/${product.name}`);
     } else {
       navigate(`/products?search=${encodeURIComponent(product.name)}`);
     }
