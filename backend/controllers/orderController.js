@@ -183,19 +183,19 @@ const createOrder = async (req, res) => {
       );
     }
 
-    await connection.commit();
+   await connection.commit();
 
-    // SEND EMAIL
-    await sendOrderEmail(email, orderNumber, subtotal);
+res.status(201).json({
+  success:true,
+  data:{
+    orderId:result.insertId,
+    orderNumber,
+    total:subtotal
+  }
+});
 
-    res.status(201).json({
-      success:true,
-      data:{
-        orderId:result.insertId,
-        orderNumber,
-        total:subtotal
-      }
-    });
+// SEND EMAIL IN BACKGROUND
+sendOrderEmail(email, orderNumber, subtotal).catch(console.error);
 
   } catch (error) {
 
