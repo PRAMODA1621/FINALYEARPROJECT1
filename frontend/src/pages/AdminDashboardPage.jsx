@@ -14,7 +14,7 @@ import {
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-
+const API_URL = import.meta.env.VITE_API_URL;
 const AdminDashboardPage = () => {
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -48,28 +48,34 @@ const AdminDashboardPage = () => {
   }, [products, orders, users]);
 
   const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+  try {
+    setLoading(true);
 
-      const [statsRes, usersRes, ordersRes, productsRes] = await Promise.all([
-        axios.get('/api/admin/dashboard', { headers }).catch(() => ({ data: { data: {} } })),
-        axios.get('/api/admin/users', { headers }).catch(() => ({ data: { data: [] } })),
-        axios.get('/api/admin/orders', { headers }).catch(() => ({ data: { data: [] } })),
-        axios.get('/api/admin/products', { headers }).catch(() => ({ data: { data: [] } }))
-      ]);
+    const token = localStorage.getItem("token");
 
-      setStats(statsRes.data.data || {});
-      setUsers(usersRes.data.data || []);
-      setOrders(ordersRes.data.data || []);
-      setProducts(productsRes.data.data || []);
-    } catch (error) {
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
+
+    const [statsRes, usersRes, ordersRes, productsRes] = await Promise.all([
+      axios.get(`${API_URL}/api/admin/dashboard`, { headers }).catch(() => ({ data: { data: {} } })),
+      axios.get(`${API_URL}/api/admin/users`, { headers }).catch(() => ({ data: { data: [] } })),
+      axios.get(`${API_URL}/api/admin/orders`, { headers }).catch(() => ({ data: { data: [] } })),
+      axios.get(`${API_URL}/api/admin/products`, { headers }).catch(() => ({ data: { data: [] } }))
+    ]);
+
+    setStats(statsRes.data.data || {});
+    setUsers(usersRes.data.data || []);
+    setOrders(ordersRes.data.data || []);
+    setProducts(productsRes.data.data || []);
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load dashboard data");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const generateNotifications = () => {
     // Low stock alerts
@@ -104,11 +110,11 @@ const AdminDashboardPage = () => {
   };
 
   const handleUpdateUser = async (userId, userData) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(`/api/admin/users/${userId}`, userData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+  try {
+    const token = localStorage.getItem('token');
+    await axios.put(`${API_URL}/api/admin/users/${userId}`, userData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
       toast.success('User updated successfully');
       fetchDashboardData();
     } catch (error) {
@@ -120,8 +126,7 @@ const AdminDashboardPage = () => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/admin/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+await axios.delete(`${API_URL}/api/admin/users/${userId}`, {        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('User deleted successfully');
       fetchDashboardData();
@@ -133,8 +138,7 @@ const AdminDashboardPage = () => {
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`/api/admin/orders/${orderId}/status`, { status }, {
-        headers: { Authorization: `Bearer ${token}` }
+await axios.put(`${API_URL}/api/admin/orders/${orderId}/status`, { status }, {        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Order status updated successfully');
       fetchDashboardData();
@@ -147,8 +151,7 @@ const AdminDashboardPage = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/admin/products/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+await axios.delete(`${API_URL}/api/admin/products/${productId}`, {        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Product deleted successfully');
       fetchDashboardData();
@@ -193,9 +196,8 @@ const AdminDashboardPage = () => {
   );
 
   const totalRevenue = orders
-    .filter(o => o.order_status === 'delivered' || o.payment_status === 'completed')
-    .reduce((sum, o) => sum + (o.total_amount || 0), 0);
-
+  .filter(o => o.order_status === "delivered" || o.payment_status === "completed")
+  .reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
   const pendingOrders = orders.filter(o => o.order_status === 'pending').length;
   const processingOrders = orders.filter(o => o.order_status === 'processing').length;
   const completedOrders = orders.filter(o => o.order_status === 'delivered').length;
