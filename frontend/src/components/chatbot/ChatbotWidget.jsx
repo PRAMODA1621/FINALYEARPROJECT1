@@ -56,12 +56,12 @@ const ChatbotWidget = () => {
       // Create bot message with all data
       const botMessage = {
   id: Date.now(),
-  text: response.reply,
+  text: response.message || response.reply,
   sender: 'bot',
   timestamp: new Date(),
   options: response.options || [],
   products: response.products || [],
-  type: response.type,
+  type: response.type || "text",
   action: response.action,
   redirect: response.redirect,
   product: response.product
