@@ -30,7 +30,7 @@ const AdminDashboardPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
+  const [tickets, setTickets] = useState([]);
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -57,17 +57,19 @@ const AdminDashboardPage = () => {
       Authorization: `Bearer ${token}`
     };
 
-    const [statsRes, usersRes, ordersRes, productsRes] = await Promise.all([
-      axios.get(`${API_URL}/api/admin/dashboard`, { headers }).catch(() => ({ data: { data: {} } })),
-      axios.get(`${API_URL}/api/admin/users`, { headers }).catch(() => ({ data: { data: [] } })),
-      axios.get(`${API_URL}/api/admin/orders`, { headers }).catch(() => ({ data: { data: [] } })),
-      axios.get(`${API_URL}/api/admin/products`, { headers }).catch(() => ({ data: { data: [] } }))
-    ]);
+    const [statsRes, usersRes, ordersRes, productsRes, ticketsRes] = await Promise.all([
+  axios.get(`${API_URL}/api/admin/dashboard`, { headers }).catch(() => ({ data: { data: {} } })),
+  axios.get(`${API_URL}/api/admin/users`, { headers }).catch(() => ({ data: { data: [] } })),
+  axios.get(`${API_URL}/api/admin/orders`, { headers }).catch(() => ({ data: { data: [] } })),
+  axios.get(`${API_URL}/api/admin/products`, { headers }).catch(() => ({ data: { data: [] } })),
+  axios.get(`${API_URL}/api/admin/helpdesk/tickets`, { headers }).catch(() => ({ data: { data: [] } }))
+]);
 
     setStats(statsRes.data.data || {});
     setUsers(usersRes.data.data || []);
     setOrders(ordersRes.data.data || []);
     setProducts(productsRes.data.data || []);
+    setTickets(ticketsRes.data.data || []);
 
   } catch (error) {
     console.error(error);
