@@ -18,9 +18,7 @@ const {
   updateTicketStatus
 } = require('../controllers/helpdeskController');
 const { protect, admin } = require('../middleware/authMiddleware');
-const { getAllTickets } = require('../controllers/helpdeskController');
 // All admin routes require authentication and admin role
-const { updateTicketStatus } = require('../controllers/helpdeskController');
 router.use(protect, admin);
 
 // Dashboard
