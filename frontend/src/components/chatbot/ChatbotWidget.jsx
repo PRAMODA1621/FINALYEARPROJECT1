@@ -55,17 +55,17 @@ const ChatbotWidget = () => {
       
       // Create bot message with all data
       const botMessage = {
-        id: Date.now(),
-        text: response.message,
-        sender: 'bot',
-        timestamp: new Date(),
-        options: response.options || [],
-        products: response.products || [],
-        type: response.type,
-        action: response.action,
-        redirect: response.redirect,
-        product: response.product
-      };
+  id: Date.now(),
+  text: response.reply,
+  sender: 'bot',
+  timestamp: new Date(),
+  options: response.options || [],
+  products: response.products || [],
+  type: response.type,
+  action: response.action,
+  redirect: response.redirect,
+  product: response.product
+};
       
       setMessages(prev => [...prev, botMessage]);
       
