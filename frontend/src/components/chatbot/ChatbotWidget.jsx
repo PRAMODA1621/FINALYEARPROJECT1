@@ -158,8 +158,8 @@ const ChatbotWidget = () => {
   };
 
   const handleViewProduct = (product) => {
-    window.location.href = `/product/${encodeURIComponent(product.name)}`;
-  };
+  window.location.href = `/products?search=${encodeURIComponent(product.name)}`;
+};
 
   const handleProductAction = (product, action) => {
     if (action === 'view') {

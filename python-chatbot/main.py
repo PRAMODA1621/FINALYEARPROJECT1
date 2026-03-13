@@ -70,10 +70,16 @@ async def chat(request: ChatRequest):
     # Browse products
     if "browse" in msg or "products" in msg:
         return {
-            "message": "Which category would you like to explore?",
-            "options": ["Wooden", "Acrylic"],
-            "products": []
-        }
+        "message": "Which category would you like to explore?",
+        "options": [
+            "Wooden",
+            "Acrylic",
+            "Metal",
+            "Crystal",
+            "Corporate Gifts"
+        ],
+        "products": []
+    }
 
     # Wooden products
     if "wooden" in msg:
