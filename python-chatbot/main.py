@@ -59,13 +59,15 @@ async def chat(request: ChatRequest):
 
     msg = request.message.lower().strip()
 
+    # Start message
     if msg == "" or msg == "start":
         return {
-        "message": "Hello! Welcome to Venus Enterprises. How can I help you today?",
-        "options": ["Browse Products", "Pricing", "Delivery"],
-        "products": []
-    }
+            "message": "Hello! Welcome to Venus Enterprises. How can I help you today?",
+            "options": ["Browse Products", "Pricing", "Delivery"],
+            "products": []
+        }
 
+    # Browse products
     if "browse" in msg or "products" in msg:
         return {
             "message": "Which category would you like to explore?",
@@ -73,25 +75,34 @@ async def chat(request: ChatRequest):
             "products": []
         }
 
-    if msg in ["wooden", "acrylic"]:
-        category = msg.capitalize()
-
+    # Wooden products
+    if "wooden" in msg:
         return {
-            "message": f"Here are some {category} products:",
+            "message": "Here are some Wooden products:",
             "options": [],
-            "products": products_by_category[category]
+            "products": products_by_category["Wooden"]
         }
 
-    if "price" in msg:
+    # Acrylic products
+    if "acrylic" in msg:
+        return {
+            "message": "Here are some Acrylic products:",
+            "options": [],
+            "products": products_by_category["Acrylic"]
+        }
+
+    # Pricing
+    if "price" in msg or "pricing" in msg:
         return {
             "message": "Our products range from ₹349 to ₹3999 depending on customization.",
             "options": ["Browse Products"],
             "products": []
         }
 
+    # Delivery
     if "delivery" in msg:
         return {
-            "message": "Delivery usually takes 3-5 business days.",
+            "message": "Delivery usually takes 3–5 business days.",
             "options": ["Browse Products"],
             "products": []
         }
