@@ -25,7 +25,15 @@ const app = express();
 // CORS (ALLOW EVERYTHING)
 // ---------------------
 
-app.use(cors());
+const cors = require("cors");
+
+app.use(cors({
+  origin: [
+    "https://venus-frontend-guqs.onrender.com",
+    "http://localhost:5173"
+  ],
+  credentials: true
+}));
 
 
 // ---------------------
