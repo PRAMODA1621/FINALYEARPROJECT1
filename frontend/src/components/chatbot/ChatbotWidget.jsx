@@ -61,7 +61,7 @@ const ChatbotWidget = () => {
   timestamp: new Date(),
   options: response.options || [],
   products: response.products || [],
-  type: response.type || "text",
+  type: response.type || "menu",
   action: response.action,
   redirect: response.redirect,
   product: response.product

@@ -1,8 +1,6 @@
 import axios from "axios";
 
-const CHATBOT_URL =
-  import.meta.env.VITE_CHATBOT_URL ||
-  "https://finalyearproject1-1.onrender.com";
+const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL;
 
 const chatbotApi = {
 
