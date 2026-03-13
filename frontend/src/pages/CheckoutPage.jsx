@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { FaArrowLeft, FaLock } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-
+const API_URL = import.meta.env.VITE_API_URL;
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, clearCart } = useCart();
@@ -90,7 +90,7 @@ const CheckoutPage = () => {
         console.log('Creating Buy Now order:', orderData);
       }
 
-      const response = await axios.post('/api/orders', orderData, {
+      const response = await axios.post(`${API_URL}/api/orders`, orderData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
