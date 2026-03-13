@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const CHATBOT_URL = process.env.CHATBOT_SERVICE_URL || 'http://localhost:8000/api';
+const CHATBOT_API = "https://finalyearproject1-1.onrender.com/api/chat";
 
 // @desc    Send message to chatbot
 // @route   POST /api/chatbot/message

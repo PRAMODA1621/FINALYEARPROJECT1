@@ -11,7 +11,7 @@ const ChatbotWidget = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:8000/api';
+const CHATBOT_API = "https://finalyearproject1-1.onrender.com/api/chat";
 
   useEffect(() => {
     // Add welcome message
