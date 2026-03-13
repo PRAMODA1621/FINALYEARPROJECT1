@@ -301,13 +301,14 @@ const ChatbotWidget = () => {
   };
 
   const handleViewProduct = (product) => {
-    if (product.id) {
-      navigate(`/product/${product.name}`);
-    } else {
-      navigate(`/products?search=${encodeURIComponent(product.name)}`);
-    }
-  };
 
+  if (product.id) {
+    window.location.href = `/products/${product.id}`;
+  } else if (product.name) {
+    window.location.href = `/products?search=${encodeURIComponent(product.name)}`;
+  }
+
+};
   const handleProductAction = (product, action) => {
     if (action === 'view') {
       handleViewProduct(product);
