@@ -12,10 +12,10 @@ const WishlistPage = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      refreshWishlist();
-    }
-  }, [isAuthenticated, refreshWishlist]);
+  if (isAuthenticated) {
+    refreshWishlist();
+  }
+}, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
