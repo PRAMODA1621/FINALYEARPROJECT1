@@ -6,40 +6,30 @@ import uvicorn
 import logging
 import os
 
-# ---------------------------------------------------
-# Logging
-# ---------------------------------------------------
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------
-# FastAPI App
-# ---------------------------------------------------
+app = FastAPI(title="Venus Enterprises AI Service")
 
-app = FastAPI(title="Venus Enterprises Recommendation Engine")
-
-
-# ---------------------------------------------------
-# CORS Configuration
-# ---------------------------------------------------
+# ----------------------------
+# CORS
+# ----------------------------
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://finalyearproject1-pvex.onrender.com",
-        "https://venus-frontend-guqs.onrender.com"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------
-# Request / Response Models
-# ---------------------------------------------------
+# ----------------------------
+# Models
+# ----------------------------
+
+class ChatRequest(BaseModel):
+    message: str
+
 
 class RecommendationRequest(BaseModel):
     product_name: str
@@ -47,14 +37,9 @@ class RecommendationRequest(BaseModel):
     limit: int = 4
 
 
-class RecommendationResponse(BaseModel):
-    recommendations: List[dict]
-    method: str
-
-
-# ---------------------------------------------------
-# Product Data (Mock Database)
-# ---------------------------------------------------
+# ----------------------------
+# Mock Product Data
+# ----------------------------
 
 products_by_category = {
     "Wooden": [
@@ -69,162 +54,78 @@ products_by_category = {
         {"product_name": "Acrylic Plaque", "score": 0.89},
         {"product_name": "Acrylic Desk Sign", "score": 0.87},
     ],
-    "Metal": [
-        {"product_name": "Metal Keychain", "score": 0.93},
-        {"product_name": "Corporate Desk Clock", "score": 0.90},
-        {"product_name": "Metal Business Card Case", "score": 0.88},
-        {"product_name": "Metal Letter Opener", "score": 0.86},
-    ],
-    "Gifts": [
-        {"product_name": "Customized Coffee Mug", "score": 0.92},
-        {"product_name": "Corporate Leather Folder", "score": 0.89},
-        {"product_name": "Executive Gift Set", "score": 0.87},
-        {"product_name": "Leather Mouse Pad", "score": 0.84},
-    ],
-    "Mementos": [
-        {"product_name": "Memento of Gratitude", "score": 0.91},
-        {"product_name": "Memento of Service", "score": 0.88},
-    ],
-    "Marble": [
-        {"product_name": "Marble Paperweight", "score": 0.90},
-        {"product_name": "Marble Plaque", "score": 0.87},
-    ]
 }
 
-
-# ---------------------------------------------------
-# Cross-Category Recommendations
-# ---------------------------------------------------
-
-cross_category = {
-    "Wooden": [
-        "Acrylic LED Name Plate",
-        "Metal Engraved Pen",
-        "Corporate Gift Combo"
-    ],
-    "Acrylic": [
-        "Wooden Name Plate",
-        "Metal Keychain",
-        "Leather Diary"
-    ],
-    "Metal": [
-        "Wooden Photo Frame",
-        "Acrylic Trophy",
-        "Corporate Gift Set"
-    ],
-    "Gifts": [
-        "Engraved Pen",
-        "Leather Diary",
-        "Custom Mug"
-    ]
-}
-
-
-# ---------------------------------------------------
-# Health Endpoints
-# ---------------------------------------------------
+# ----------------------------
+# Root
+# ----------------------------
 
 @app.get("/")
 async def root():
-    return {
-        "message": "Venus Enterprises Recommendation API",
-        "status": "running"
-    }
-
+    return {"status": "AI service running"}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
+# ----------------------------
+# CHATBOT ENDPOINT
+# ----------------------------
 
-# ---------------------------------------------------
-# Recommendation Endpoint
-# ---------------------------------------------------
+@app.post("/api/chat")
+async def chat(request: ChatRequest):
 
-@app.post("/api/recommend", response_model=RecommendationResponse)
+    msg = request.message.lower()
+
+    if "hello" in msg or "hi" in msg:
+        return {"reply": "Hello! Welcome to Venus Enterprises. How can I help you?"}
+
+    if "products" in msg:
+        return {"reply": "We offer Wooden, Acrylic, Metal, Crystal and Corporate gifts."}
+
+    if "price" in msg:
+        return {"reply": "Our products range from ₹349 to ₹3999 depending on customization."}
+
+    if "delivery" in msg:
+        return {"reply": "Delivery usually takes 3-5 business days."}
+
+    return {"reply": "I'm here to help! Ask me about our products, pricing, or delivery."}
+
+
+# ----------------------------
+# RECOMMENDATION ENDPOINT
+# ----------------------------
+
+@app.post("/api/recommend")
 async def recommend(request: RecommendationRequest):
 
     logger.info(f"Recommendation request: {request.product_name}")
 
     recommendations = []
 
-    # -------------------------
-    # Category Recommendations
-    # -------------------------
+    if request.category in products_by_category:
 
-    if request.category and request.category in products_by_category:
+        for p in products_by_category[request.category]:
 
-        category_recs = products_by_category[request.category]
+            if p["product_name"] != request.product_name:
+                recommendations.append(p)
 
-        filtered = [
-            r for r in category_recs
-            if r["product_name"] != request.product_name
-        ]
-
-        recommendations = filtered[:request.limit]
-
-    # -------------------------
-    # Cross Category Suggestions
-    # -------------------------
-
-    if (
-        len(recommendations) < request.limit
-        and request.category in cross_category
-    ):
-
-        cross_recs = cross_category[request.category]
-
-        for rec in cross_recs:
-
-            if len(recommendations) >= request.limit:
-                break
-
-            if not any(r["product_name"] == rec for r in recommendations):
-                recommendations.append({
-                    "product_name": rec,
-                    "score": 0.75
-                })
-
-    # -------------------------
-    # Popular Fallback Products
-    # -------------------------
-
-    popular_products = [
-        {"product_name": "Engraved Wooden Name Plate", "score": 0.98},
-        {"product_name": "Metal Engraved Pen", "score": 0.97},
-        {"product_name": "Corporate Gift Combo", "score": 0.96},
-        {"product_name": "Crystal Corporate Award", "score": 0.95},
-    ]
-
-    while len(recommendations) < request.limit:
-
-        for pop in popular_products:
-
-            if len(recommendations) >= request.limit:
-                break
-
-            if not any(
-                r["product_name"] == pop["product_name"]
-                for r in recommendations
-            ):
-                recommendations.append(pop)
-
-    return RecommendationResponse(
-        recommendations=recommendations[:request.limit],
-        method="collaborative_filtering"
-    )
+    return {
+        "recommendations": recommendations[:request.limit],
+        "method": "content_based"
+    }
 
 
-# ---------------------------------------------------
-# Server Start
-# ---------------------------------------------------
+# ----------------------------
+# SERVER START
+# ----------------------------
 
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 8000))
 
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=port,
-        reload=False
+        port=port
     )
