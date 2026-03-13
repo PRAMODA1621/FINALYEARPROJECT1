@@ -1,27 +1,30 @@
-import axios from 'axios';
+import axios from "axios";
 
-const CHATBOT_URL = "/api/chatbot";
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  "https://finalyearproject1-pvex.onrender.com/api";
+
 const chatbotApi = {
-  // Send message to chatbot
-  sendMessage: async (message, sessionId = null) => {
-    const response = await axios.post(`${CHATBOT_URL}/chat`, {
+
+  // Send message
+  sendMessage: async (message, sessionId = "default") => {
+    const response = await axios.post(`${API_BASE}/chatbot/message`, {
       message,
-      session_id: sessionId
+      sessionId
     });
-    return response.data;
+
+    return response.data.data;   // important
   },
 
-  // Reset chat session
-  resetChat: async (sessionId) => {
-    const response = await axios.post(`${CHATBOT_URL}/chat/reset?session_id=${sessionId || 'default'}`);
-    return response.data;
-  },
+  // Reset chat
+  resetChat: async (sessionId = "default") => {
+    const response = await axios.post(`${API_BASE}/chatbot/reset`, {
+      sessionId
+    });
 
-  // Get session state
-  getSessionState: async (sessionId) => {
-    const response = await axios.get(`${CHATBOT_URL}/chat/state/${sessionId || 'default'}`);
     return response.data;
   }
+
 };
 
 export default chatbotApi;
