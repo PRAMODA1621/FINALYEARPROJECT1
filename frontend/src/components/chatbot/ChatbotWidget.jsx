@@ -26,7 +26,7 @@ const ChatbotWidget = () => {
     
     // Start chat with empty message to get language selection
     setTimeout(() => {
-      sendMessageToBot('');
+      sendMessageToBot('start');
     }, 500);
   }, []);
 
