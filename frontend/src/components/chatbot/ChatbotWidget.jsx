@@ -87,8 +87,6 @@ const ChatbotWidget = () => {
             { id: 'shop', label: '🛍️ Shop', action: 'shop' },
             { id: 'custom', label: '✨ Custom Order', action: 'custom' },
             { id: 'price', label: '💰 Price', action: 'price' },
-            { id: 'gift', label: '🎯 Gift Finder', action: 'gift' },
-            { id: 'corporate', label: '🏢 Corporate', action: 'corporate' },
             { id: 'help', label: '❓ Help', action: 'help' },
             { id: 'track', label: '📦 Track', action: 'track' },
             { id: 'login', label: '🔑 Login', action: 'login' }
@@ -134,15 +132,12 @@ const ChatbotWidget = () => {
     window.location.href = url;
   }, []);
 
-  // Handle option clicks - UPDATED with custom order redirect
+  // Handle option clicks
   const handleOptionClick = useCallback((option) => {
     const optionText = option.label || option;
     const optionAction = option.action || option;
-    const optionId = option.id || option;
     
-    console.log('Option clicked:', { optionText, optionAction, optionId });
-    
-    // Add user message to chat
+    // Add user message
     const userMessage = {
       id: Date.now(),
       text: optionText,
@@ -151,148 +146,93 @@ const ChatbotWidget = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
-    // SPECIAL HANDLING FOR CUSTOM ORDER - Direct redirect
-    if (optionAction === 'custom' || 
-        optionAction === 'custom-order' || 
-        optionId === 'custom' ||
-        optionText === '✨ Custom Order' ||
-        optionText === '✨ Custom' ||
-        optionText.toLowerCase().includes('custom')) {
+    // Handle special actions with redirects
+    switch (optionAction) {
+      case 'custom':
+      case '✨ Custom Order':
+      case 'custom-order':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/custom-order');
+        break;
       
-      console.log('🔴 Redirecting to custom order page...');
+      case 'login':
+      case '🔑 Login':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/login');
+        break;
       
-      // Show a quick message
-      const redirectMessage = {
-        id: Date.now() + 1,
-        text: "✨ **Taking you to our custom order page...**",
-        sender: 'bot',
-        timestamp: new Date(),
-        type: 'redirect'
-      };
-      setMessages(prev => [...prev, redirectMessage]);
+      case 'register':
+      case '📝 Register':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/register');
+        break;
       
-      // Redirect to custom order page
-      setTimeout(() => {
-        window.location.href = 'https://venus-frontend-guqs.onrender.com/custom-order';
-      }, 800);
-      return;
+      case 'help':
+      case '❓ Help':
+      case 'helpdesk':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/helpdesk');
+        break;
+      
+      case 'track':
+      case '📦 Track Order':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/track-order');
+        break;
+      
+      case 'contact':
+      case '📞 Contact':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/contact');
+        break;
+      
+      case 'cart':
+      case '🛒 Cart':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/cart');
+        break;
+      
+      case 'wishlist':
+      case '❤️ Wishlist':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/wishlist');
+        break;
+      
+      case 'profile':
+      case '👤 Profile':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/profile');
+        break;
+      
+      case 'orders':
+      case '📋 Orders':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/orders');
+        break;
+      
+      case 'whatsapp':
+        window.open('https://wa.me/919876543210', '_blank');
+        break;
+      
+      case 'email':
+        window.location.href = 'mailto:support@venusenterprises.com';
+        break;
+      
+      case 'call':
+        window.location.href = 'tel:+919876543210';
+        break;
+      
+      case 'map':
+        window.open('https://maps.google.com/?q=Peenya+Industrial+Area+Bengaluru', '_blank');
+        break;
+      
+      case 'faq':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/faq');
+        break;
+      
+      case 'returns':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/returns-policy');
+        break;
+      
+      case 'shipping':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/shipping-info');
+        break;
+      
+      default:
+        // Send to bot for processing
+        sendMessageToBot(optionText);
     }
-    
-    // LOGIN redirect
-    if (optionAction === 'login' || 
-        optionAction === '🔑 Login' || 
-        optionText === '🔑 Login' ||
-        optionText.toLowerCase().includes('login')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/login';
-      return;
-    }
-    
-    // REGISTER redirect
-    if (optionAction === 'register' || 
-        optionAction === '📝 Register' || 
-        optionText === '📝 Register' ||
-        optionText.toLowerCase().includes('register')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/register';
-      return;
-    }
-    
-    // HELP DESK redirect
-    if (optionAction === 'help' || 
-        optionAction === '❓ Help' || 
-        optionText === '❓ Help' ||
-        optionAction === 'helpdesk' ||
-        optionText.toLowerCase().includes('help')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/helpdesk';
-      return;
-    }
-    
-    // TRACK ORDER redirect
-    if (optionAction === 'track' || 
-        optionAction === '📦 Track' || 
-        optionText === '📦 Track' ||
-        optionAction === 'track-order' ||
-        optionText.toLowerCase().includes('track')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/track-order';
-      return;
-    }
-    
-    // CONTACT redirect
-    if (optionAction === 'contact' || 
-        optionAction === '📞 Contact' || 
-        optionText === '📞 Contact' ||
-        optionText.toLowerCase().includes('contact')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/contact';
-      return;
-    }
-    
-    // CART redirect
-    if (optionAction === 'cart' || 
-        optionAction === '🛒 Cart' || 
-        optionText === '🛒 Cart' ||
-        optionText.toLowerCase().includes('cart')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/cart';
-      return;
-    }
-    
-    // PROFILE redirect
-    if (optionAction === 'profile' || 
-        optionAction === '👤 Profile' || 
-        optionText === '👤 Profile' ||
-        optionText.toLowerCase().includes('profile')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/profile';
-      return;
-    }
-    
-    // WISHLIST redirect
-    if (optionAction === 'wishlist' || 
-        optionAction === '❤️ Wishlist' || 
-        optionText === '❤️ Wishlist' ||
-        optionText.toLowerCase().includes('wishlist')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/wishlist';
-      return;
-    }
-    
-    // SHOP / PRODUCTS redirect
-    if (optionAction === 'shop' || 
-        optionAction === '🛍️ Shop' || 
-        optionText === '🛍️ Shop' ||
-        optionText.toLowerCase().includes('shop') ||
-        optionText.toLowerCase().includes('browse')) {
-      window.location.href = 'https://venus-frontend-guqs.onrender.com/products';
-      return;
-    }
-    
-    // PRICE - handle through bot
-    if (optionAction === 'price' || 
-        optionAction === '💰 Price' || 
-        optionText === '💰 Price' ||
-        optionText.toLowerCase().includes('price')) {
-      sendMessageToBot('💰 Price Explorer');
-      return;
-    }
-    
-    // GIFT FINDER - handle through bot
-    if (optionAction === 'gift' || 
-        optionAction === '🎯 Gift Finder' || 
-        optionText === '🎯 Gift Finder' ||
-        optionText.toLowerCase().includes('gift')) {
-      sendMessageToBot('🎯 Gift Finder');
-      return;
-    }
-    
-    // CORPORATE - handle through bot
-    if (optionAction === 'corporate' || 
-        optionAction === '🏢 Corporate' || 
-        optionText === '🏢 Corporate' ||
-        optionText.toLowerCase().includes('corporate')) {
-      sendMessageToBot('🏢 Corporate Solutions');
-      return;
-    }
-    
-    // For all other options, send to bot
-    sendMessageToBot(optionText);
-    
-  }, [sendMessageToBot]);
+  }, [handleRedirect]);
 
   // Send message to bot
   const sendMessageToBot = useCallback(async (message) => {
@@ -303,26 +243,13 @@ const ChatbotWidget = () => {
     
     try {
       // Ping service before sending (wake up if needed)
-      await keepAlive.quickPing();
+      await keepAlive.pingNow();
       
       const response = await chatbotApi.sendMessage(message, sessionId);
       
-      // Handle redirect responses from API
+      // Handle redirect responses
       if (response.redirect) {
-        // Show redirect message
-        const redirectMessage = {
-          id: Date.now(),
-          text: response.message || "✨ Redirecting you...",
-          sender: 'bot',
-          timestamp: new Date(),
-          type: 'redirect'
-        };
-        setMessages(prev => [...prev, redirectMessage]);
-        
-        // Redirect after delay
-        setTimeout(() => {
-          window.location.href = response.redirect;
-        }, 800);
+        handleRedirect(response.redirect);
         return;
       }
       
@@ -362,7 +289,7 @@ const ChatbotWidget = () => {
     } finally {
       setIsTyping(false);
     }
-  }, [sessionId]);
+  }, [sessionId, handleRedirect]);
 
   // Handle send message
   const handleSendMessage = useCallback(() => {
@@ -376,25 +303,6 @@ const ChatbotWidget = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Check if message contains "custom" - redirect directly
-    if (inputMessage.toLowerCase().includes('custom')) {
-      const redirectMessage = {
-        id: Date.now() + 1,
-        text: "✨ **Taking you to our custom order page...**",
-        sender: 'bot',
-        timestamp: new Date(),
-        type: 'redirect'
-      };
-      setMessages(prev => [...prev, redirectMessage]);
-      
-      setTimeout(() => {
-        window.location.href = 'https://venus-frontend-guqs.onrender.com/custom-order';
-      }, 800);
-      setInputMessage('');
-      return;
-    }
-    
     sendMessageToBot(inputMessage);
     setInputMessage('');
   }, [inputMessage, isTyping, sendMessageToBot]);
@@ -464,8 +372,8 @@ const ChatbotWidget = () => {
   // Handle view product
   const handleViewProduct = useCallback((product) => {
     const productName = encodeURIComponent(product.name);
-    window.location.href = `https://venus-frontend-guqs.onrender.com/product/${productName}`;
-  }, []);
+    handleRedirect(`https://venus-frontend-guqs.onrender.com/product/${productName}`);
+  }, [handleRedirect]);
 
   // Get category icon
   const getCategoryIcon = useCallback((category) => {
@@ -497,7 +405,7 @@ const ChatbotWidget = () => {
     });
   }, []);
 
-  // Quick actions - UPDATED with custom action
+  // Quick actions
   const quickActions = useMemo(() => [
     { id: 'shop', label: '🛍️ Shop', icon: <FaGift />, action: 'shop' },
     { id: 'custom', label: '✨ Custom', icon: <FaPalette />, action: 'custom' },
@@ -515,7 +423,7 @@ const ChatbotWidget = () => {
       <button
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) keepAlive.quickPing();
+          if (!isOpen) keepAlive.pingNow();
         }}
         onMouseEnter={() => keepAlive.quickPing()}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-[#8B5A2B] to-[#9CAF88] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"
@@ -644,60 +552,21 @@ const ChatbotWidget = () => {
                         </div>
                       </div>
                     ))}
-                    
-                    {/* Filter options */}
-                    {msg.products.length > 3 && (
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center space-x-2">
-                          <FaFilter className="text-[#9CAF88] text-xs" />
-                          <span className="text-xs text-gray-500">Sort:</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleOptionClick('Price: Low to High')}
-                            className="text-xs bg-white px-3 py-1.5 rounded-full border border-[#E8E0D5] hover:bg-[#9CAF88] hover:text-white transition-colors"
-                          >
-                            📈 Low to High
-                          </button>
-                          <button
-                            onClick={() => handleOptionClick('Price: High to Low')}
-                            className="text-xs bg-white px-3 py-1.5 rounded-full border border-[#E8E0D5] hover:bg-[#9CAF88] hover:text-white transition-colors"
-                          >
-                            📉 High to Low
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Options Buttons - UPDATED to handle custom properly */}
+                {/* Options */}
                 {msg.options?.length > 0 && !msg.products?.length && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {msg.options.map((opt) => {
-                      // Ensure opt is in the correct format
-                      const optionObj = typeof opt === 'string' 
-                        ? { id: opt, label: opt, action: opt.toLowerCase().replace(/\s+/g, '-') }
-                        : opt;
-                      
-                      // Special handling for custom option
-                      if (optionObj.label?.includes('Custom') || 
-                          optionObj.action === 'custom' ||
-                          optionObj.label === '✨ Custom Order' ||
-                          optionObj.label === '✨ Custom') {
-                        optionObj.action = 'custom';
-                      }
-                      
-                      return (
-                        <button
-                          key={optionObj.id || optionObj.label}
-                          onClick={() => handleOptionClick(optionObj)}
-                          className="px-4 py-2 bg-white border border-[#9CAF88] text-[#8B5A2B] rounded-full text-xs hover:bg-[#9CAF88] hover:text-white transition-colors shadow-sm"
-                        >
-                          {optionObj.label || optionObj}
-                        </button>
-                      );
-                    })}
+                    {msg.options.map((opt) => (
+                      <button
+                        key={opt.id || opt.label}
+                        onClick={() => handleOptionClick(opt)}
+                        className="px-4 py-2 bg-white border border-[#9CAF88] text-[#8B5A2B] rounded-full text-xs hover:bg-[#9CAF88] hover:text-white transition-colors shadow-sm"
+                      >
+                        {opt.label || opt}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -741,7 +610,7 @@ const ChatbotWidget = () => {
               </button>
             </div>
 
-            {/* Quick Actions - Now includes Custom */}
+            {/* Quick Actions */}
             <div className="flex flex-wrap gap-1.5 mt-3">
               {quickActions.map((action) => (
                 <button
@@ -774,16 +643,6 @@ const ChatbotWidget = () => {
                 <FaClock size={12} />
                 24/7 Support
               </span>
-            </div>
-            
-            {/* Custom Order Quick Link */}
-            <div className="mt-2 text-center">
-              <button
-                onClick={() => handleOptionClick({ id: 'custom', label: '✨ Custom Order', action: 'custom' })}
-                className="text-xs text-[#8B5A2B] hover:text-[#9CAF88] transition-colors underline"
-              >
-                Need something unique? Create custom order →
-              </button>
             </div>
           </div>
         </div>
