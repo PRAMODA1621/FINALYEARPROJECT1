@@ -68,12 +68,6 @@ const ChatbotWidget = () => {
     setSessionId('session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
   }, []);
 
-  // Start keep-alive service
-  useEffect(() => {
-    keepAlive.start();
-    return () => keepAlive.stop();
-  }, []);
-
   // Welcome message
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -232,7 +226,7 @@ const ChatbotWidget = () => {
         // Send to bot for processing
         sendMessageToBot(optionText);
     }
-  }, [handleRedirect]);
+  }, [handleRedirect, sendMessageToBot]);
 
   // Send message to bot
   const sendMessageToBot = useCallback(async (message) => {
@@ -243,7 +237,7 @@ const ChatbotWidget = () => {
     
     try {
       // Ping service before sending (wake up if needed)
-      await keepAlive.pingNow();
+      keepAlive.ping(); // Changed from pingNow() to ping()
       
       const response = await chatbotApi.sendMessage(message, sessionId);
       
@@ -423,9 +417,8 @@ const ChatbotWidget = () => {
       <button
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) keepAlive.pingNow();
+          if (!isOpen) keepAlive.ping(); // Changed from pingNow() to ping()
         }}
-        onMouseEnter={() => keepAlive.quickPing()}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-[#8B5A2B] to-[#9CAF88] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"
         aria-label="Toggle chat"
       >

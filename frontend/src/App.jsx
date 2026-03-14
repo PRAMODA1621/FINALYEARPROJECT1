@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -8,6 +8,9 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
+
+// Import keepAlive
+import keepAlive from './utils/keepAlive';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -34,16 +37,25 @@ import CustomOrderPage from './pages/CustomOrderPage';
 // import OrdersPage from './pages/OrdersPage'; // COMMENT THIS OUT OR DELETE
 
 function App() {
+  // Initialize keepAlive when app mounts
+  useEffect(() => {
+    // Start the keep-alive service
+    keepAlive.start();
+    
+    // Clean up on unmount
+    return () => {
+      keepAlive.stop();
+    };
+  }, []);
+
   return (
     <HelmetProvider>
       <ErrorBoundary>
         <div className="min-h-screen flex flex-col bg-[#F5F5F0]">
-
           <Navbar />
 
           <main className="flex-grow pt-20">
             <Routes>
-
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -65,7 +77,7 @@ function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/order-success" element={<OrderSuccessPage />} />
                 <Route path="/dashboard" element={<UserDashboardPage />} />
-                <Route path="/orders" element={<UserDashboardPage />} /> {/* CHANGED: Now points to stylish dashboard */}
+                <Route path="/orders" element={<UserDashboardPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
@@ -80,7 +92,6 @@ function App() {
               <Route path="/custom-order" element={<CustomOrderPage />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
-
             </Routes>
           </main>
 
