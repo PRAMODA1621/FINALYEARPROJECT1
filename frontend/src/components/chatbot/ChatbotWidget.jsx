@@ -300,12 +300,12 @@ const ChatbotWidget = () => {
     }
   };
 
-  const handleViewProduct = (product) => {
+ const handleViewProduct = (product) => {
 
   if (product.id) {
-    window.location.href = `/products/${product.id}`;
+    navigate(`/product/${product.id}`);
   } else if (product.name) {
-    window.location.href = `/products?search=${encodeURIComponent(product.name)}`;
+    navigate(`/products?search=${encodeURIComponent(product.name)}`);
   }
 
 };
