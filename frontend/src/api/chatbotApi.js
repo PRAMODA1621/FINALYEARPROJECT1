@@ -1,42 +1,58 @@
-import axios from "axios";
+import axios from 'axios';
 
 const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || "https://finalyearproject1-1.onrender.com";
+
+// Create axios instance with defaults
+const apiClient = axios.create({
+  baseURL: CHATBOT_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    // You can add auth tokens here if needed
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.code === 'ECONNABORTED') {
+      console.log('Request timeout');
+    }
+    return Promise.reject(error);
+  }
+);
 
 const chatbotApi = {
   sendMessage: async (message, sessionId = null) => {
     try {
-      console.log('📤 Sending to chatbot:', { message, sessionId });
+      const response = await apiClient.post('/api/chat', {
+        message,
+        session_id: sessionId
+      });
       
-      const response = await axios.post(
-        `${CHATBOT_URL}/api/chat`,
-        { 
-          message,
-          session_id: sessionId 
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 15000, // 15 second timeout for Render cold start
-        }
-      );
-
-      console.log('📥 Chatbot response:', response.data);
       return response.data;
       
     } catch (error) {
-      console.error('❌ Chatbot API error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        url: error.config?.url
-      });
+      console.error('Chatbot API error:', error);
       
-      // Return a fallback response for better UX
+      // Return fallback response for better UX
       if (error.code === 'ECONNABORTED') {
         return {
-          message: "⏳ The AI service is waking up. Please try again in a moment.",
-          options: ["Try Again", "Browse Products"],
+          message: "⏳ The service is waking up. Please try again.",
+          options: ["Try Again", "Browse Products", "Contact Support"],
           products: [],
           type: "error"
         };
