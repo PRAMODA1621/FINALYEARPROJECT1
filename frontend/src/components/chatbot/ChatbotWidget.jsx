@@ -300,14 +300,18 @@ const ChatbotWidget = () => {
     }
   };
 
- const handleViewProduct = (product) => {
-
-  if (product.id) {
-    navigate(`/product/${product.id}`);
-  } else if (product.name) {
-    navigate(`/products?search=${encodeURIComponent(product.name)}`);
-  }
-
+ // In ChatbotWidget.js - Update this function
+const handleViewProduct = (product) => {
+  // Use product name in URL, not ID
+  // Encode the product name to handle spaces and special characters
+  const productName = encodeURIComponent(product.name);
+  const productUrl = `/product/${productName}`;
+  
+  // If you want to open in same tab (recommended for better UX)
+  navigate(productUrl);
+  
+  // If you want to open in new tab (optional)
+  // window.open(productUrl, '_blank');
 };
   const handleProductAction = (product, action) => {
     if (action === 'view') {
@@ -455,10 +459,10 @@ const ChatbotWidget = () => {
                     
                     {message.products.map((product, idx) => (
                       <div 
-                        key={product.id || idx}
-                        className="bg-white rounded-lg p-3 border border-[#E8E0D5] shadow-sm hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer"
-                        onClick={() => handleViewProduct(product)}
-                      >
+  key={product.id || idx}
+  className="bg-white rounded-lg p-3 border border-[#E8E0D5] shadow-sm hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+  onClick={() => handleViewProduct(product)}  // This will now use name-based URL
+>
                         <div className="flex items-start space-x-3">
                           {/* Product Image */}
                           <div className="w-16 h-16 bg-[#F5F0E8] rounded-lg overflow-hidden flex-shrink-0 border border-[#E8E0D5]">
