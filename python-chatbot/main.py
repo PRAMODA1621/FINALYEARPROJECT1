@@ -1,34 +1,56 @@
-from fastapi import FastAPI
+# main.py
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import os
-import aiohttp
-import asyncio
-from typing import Optional, List, Dict, Any
+import re
+import logging
+from typing import List, Optional, Dict, Any
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Import new modules
-from chatbot_engine import ShoppingAssistant, enhanced_intent_understanding, ConversationMemory
-from fetch_products import fetch_products_with_filters, get_product_recommendations
+# Import our modules
+from category_mapper import extract_category, get_display_options, get_category_icon
+from fetch_products import (
+    fetch_products_by_category,
+    fetch_all_products,
+    fetch_products_by_price
+)
 
-app = FastAPI(title="Venus Enterprises AI Chatbot - Enhanced")
+# Load environment variables
+load_dotenv()
 
-# CORS
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize FastAPI
+app = FastAPI(
+    title="Venus Enterprises AI Shopping Assistant",
+    description="AI-powered chatbot for Venus Enterprises e-commerce",
+    version="2.0.0"
+)
+
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, replace with your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ------------------- CONFIGURATION -------------------
-NODE_BACKEND_URL = os.environ.get("NODE_BACKEND_URL", "https://finalyearproject1-pvex.onrender.com")
-HUGGINGFACE_TOKEN = os.environ.get("HUGGINGFACE_TOKEN", "")
+NODE_BACKEND_URL = os.getenv("NODE_BACKEND_URL", "https://finalyearproject1-pvex.onrender.com")
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
+PORT = int(os.getenv("PORT", 8000))
 
-print(f"🚀 Node Backend URL: {NODE_BACKEND_URL}")
-print(f"🤖 HuggingFace Token: {'✅ Set' if HUGGINGFACE_TOKEN else '❌ Not Set'}")
+logger.info(f"🚀 Node Backend URL: {NODE_BACKEND_URL}")
+logger.info(f"🤖 HuggingFace Token: {'✅ Set' if HUGGINGFACE_TOKEN else '❌ Not Set'}")
 
 # ------------------- MODELS -------------------
 class ChatRequest(BaseModel):
@@ -40,331 +62,338 @@ class ChatResponse(BaseModel):
     options: List[str] = []
     products: List[Dict[str, Any]] = []
     type: str = "response"
-    follow_up: Optional[str] = None
-    suggested_actions: List[Dict] = []
-    state: Optional[str] = None
+    category: Optional[str] = None
 
-# ------------------- LLM INTEGRATION -------------------
-class HuggingFaceLLM:
-    def __init__(self):
-        self.api_token = HUGGINGFACE_TOKEN
-        self.model = "mistralai/Mistral-7B-Instruct-v0.1"
-        self.api_url = f"https://api-inference.huggingface.co/models/{self.model}"
-        self.headers = {"Authorization": f"Bearer {self.api_token}"} if self.api_token else {}
-        
-    async def query(self, prompt: str, max_length: int = 200) -> str:
-        if not self.api_token:
-            return None
-            
-        try:
-            async with aiohttp.ClientSession() as session:
-                payload = {
-                    "inputs": prompt,
-                    "parameters": {
-                        "max_new_tokens": max_length,
-                        "temperature": 0.7,
-                        "top_p": 0.95,
-                        "do_sample": True,
-                        "return_full_text": False
-                    }
-                }
-                
-                async with session.post(self.api_url, headers=self.headers, json=payload, timeout=30) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        if isinstance(result, list) and len(result) > 0:
-                            return result[0].get('generated_text', '').strip()
-                    elif response.status == 503:
-                        return "LOADING"
-                    else:
-                        print(f"API Error: {response.status}")
-                        return None
-        except Exception as e:
-            print(f"LLM Error: {e}")
-            return None
+# ------------------- HELPER FUNCTIONS -------------------
+def extract_price_from_message(message: str) -> Optional[Dict[str, float]]:
+    """Extract price range from message"""
+    message_lower = message.lower()
     
-    async def generate_natural_response(self, prompt: str) -> str:
-        """Generate natural language response"""
-        response = await self.query(prompt, max_length=150)
-        if response and response != "LOADING":
-            return response
-        return None
+    # Pattern: under ₹500, below 500, less than 500
+    under_match = re.search(r'under\s*₹?(\d+)|below\s*₹?(\d+)|less than\s*₹?(\d+)', message_lower)
+    if under_match:
+        price = next((int(x) for x in under_match.groups() if x), None)
+        if price:
+            return {"max": float(price)}
+    
+    # Pattern: above ₹500, over 500, more than 500
+    above_match = re.search(r'above\s*₹?(\d+)|over\s*₹?(\d+)|more than\s*₹?(\d+)', message_lower)
+    if above_match:
+        price = next((int(x) for x in above_match.groups() if x), None)
+        if price:
+            return {"min": float(price)}
+    
+    # Pattern: between 500 and 1000, 500-1000
+    range_match = re.search(r'between\s*₹?(\d+)\s*(?:and|to|-)\s*₹?(\d+)|(\d+)\s*-\s*(\d+)', message_lower)
+    if range_match:
+        groups = range_match.groups()
+        prices = [int(g) for g in groups if g]
+        if len(prices) >= 2:
+            return {"min": float(prices[0]), "max": float(prices[1])}
+    
+    return None
 
-# Initialize components
-llm = HuggingFaceLLM()
-assistant = ShoppingAssistant(llm, NODE_BACKEND_URL)
+# ------------------- RESPONSE GENERATORS -------------------
+def get_welcome_response() -> ChatResponse:
+    """Generate welcome message"""
+    return ChatResponse(
+        message="""👋 Welcome to Venus Enterprises! I'm your AI shopping assistant.
 
-# ------------------- MAIN CHAT LOGIC -------------------
-async def process_message(message: str, session_id: str = None) -> ChatResponse:
-    """Enhanced message processing"""
-    
-    # Get or create session
-    session = assistant.get_or_create_session(session_id or "default")
-    
-    # Empty message (welcome)
-    if not message or message.strip() == "":
-        welcome_msg = """👋 Welcome to Venus Enterprises! I'm your AI shopping assistant.
+I can help you find the perfect awards, gifts, and corporate merchandise from our collection.
 
-I can help you:
-• Find perfect awards and gifts
-• Compare products by price
-• Suggest items for any budget
-• Guide you through categories
-• Recommend corporate gifts
-• Help with custom orders
+🔍 **Try asking:**
+• "Show me wooden awards"
+• "Gifts under ₹1000"
+• "Corporate gifts"
+• "Metal trophies"
+• "Browse all products"
 
-How can I assist you today?"""
-        
-        return ChatResponse(
-            message=welcome_msg,
-            options=[
-                "🪵 Browse Wooden",
-                "✨ Browse Acrylic",
-                "🏢 Corporate Gifts",
-                "💰 Filter by Price",
-                "🎯 Get Recommendations",
-                "❓ Help"
-            ],
-            type="welcome",
-            state=session.state.value
-        )
-    
-    # Enhanced intent understanding
-    intent = await enhanced_intent_understanding(llm, message, session)
-    print(f"🧠 Enhanced Intent: {intent}")
-    
-    # Process through shopping assistant
-    result = await assistant.process_shopping_intent(message, session, intent)
-    
-    # Update session with interaction
-    session.update(message, result.get("message", ""), intent)
-    
-    # Build response
-    response = ChatResponse(
-        message=result.get("message", "I'll help you find what you're looking for."),
-        products=result.get("products", []),
-        options=result.get("options", []),
-        type=result.get("type", "response"),
-        follow_up=result.get("follow_up"),
-        suggested_actions=result.get("suggested_actions", []),
-        state=session.state.value
+How can I assist you today?""",
+        options=get_display_options(),
+        type="welcome"
     )
-    
-    # Add cart summary if user is browsing products
-    if session.context.get("interested_products"):
-        response.message += f"\n\nYou've shown interest in {len(session.context['interested_products'])} products. Would you like to review them?"
-    
-    return response
 
-# ------------------- API ENDPOINTS -------------------
+def get_help_response() -> ChatResponse:
+    """Generate help message"""
+    return ChatResponse(
+        message="""❓ **How can I help you?**
+
+I can assist with:
+• 🪵 **Wooden Items** - Awards, plaques, name plates
+• ✨ **Acrylic Items** - Modern awards, signs, trophies
+• ⚙️ **Metal Items** - Pens, keychains, desk accessories
+• 💎 **Gifts** - Corporate gifts, mementos
+• 🏢 **Corporate Gifts** - Bulk orders, customized
+• 🏆 **Awards** - Trophies, medals, plaques
+• 🗿 **Marble** - Premium marble awards
+• 💰 **Price Range** - Find products in your budget
+
+Just click any option above or type what you're looking for!""",
+        options=get_display_options(),
+        type="help"
+    )
+
+def get_price_selection_response() -> ChatResponse:
+    """Generate price selection options"""
+    return ChatResponse(
+        message="💰 **What's your budget?**\n\nSelect a price range to see products:",
+        options=[
+            "Under ₹500",
+            "₹500 - ₹1000",
+            "₹1000 - ₹2500",
+            "₹2500 - ₹5000",
+            "Above ₹5000"
+        ],
+        type="price_selection"
+    )
+
+# ------------------- MAIN CHAT ENDPOINT -------------------
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    """Main chat endpoint"""
+    try:
+        logger.info(f"📨 Message: '{request.message}'")
+        
+        # Handle empty message (welcome)
+        if not request.message or request.message.strip() == "":
+            return get_welcome_response()
+        
+        # Extract category from message
+        category = extract_category(request.message)
+        logger.info(f"📊 Extracted category: {category}")
+        
+        # Handle help intent
+        if category == "help":
+            return get_help_response()
+        
+        # Handle price selection
+        if category == "price" or "under" in request.message.lower() or "₹" in request.message:
+            # Check if it's a price range selection
+            if request.message in ["Under ₹500", "₹500 - ₹1000", "₹1000 - ₹2500", "₹2500 - ₹5000", "Above ₹5000"]:
+                # Parse the selected range
+                if "Under" in request.message:
+                    max_price = 500
+                    products = await fetch_products_by_price(NODE_BACKEND_URL, max_price=max_price, limit=8)
+                    return ChatResponse(
+                        message=f"💰 **Products under ₹{max_price}:**",
+                        products=products,
+                        options=get_display_options()[:6],
+                        type="products"
+                    )
+                elif "₹500 - ₹1000" in request.message:
+                    products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=500, max_price=1000, limit=8)
+                    return ChatResponse(
+                        message="💰 **Products between ₹500 - ₹1000:**",
+                        products=products,
+                        options=get_display_options()[:6],
+                        type="products"
+                    )
+                elif "₹1000 - ₹2500" in request.message:
+                    products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=1000, max_price=2500, limit=8)
+                    return ChatResponse(
+                        message="💰 **Products between ₹1000 - ₹2500:**",
+                        products=products,
+                        options=get_display_options()[:6],
+                        type="products"
+                    )
+                elif "₹2500 - ₹5000" in request.message:
+                    products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=2500, max_price=5000, limit=8)
+                    return ChatResponse(
+                        message="💰 **Products between ₹2500 - ₹5000:**",
+                        products=products,
+                        options=get_display_options()[:6],
+                        type="products"
+                    )
+                elif "Above ₹5000" in request.message:
+                    products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=5000, limit=8)
+                    return ChatResponse(
+                        message="💰 **Premium products above ₹5000:**",
+                        products=products,
+                        options=get_display_options()[:6],
+                        type="products"
+                    )
+            else:
+                # Try to extract price from natural language
+                price_range = extract_price_from_message(request.message)
+                if price_range:
+                    products = await fetch_products_by_price(
+                        NODE_BACKEND_URL,
+                        min_price=price_range.get("min"),
+                        max_price=price_range.get("max"),
+                        limit=8
+                    )
+                    if products:
+                        range_text = ""
+                        if price_range.get("min") and price_range.get("max"):
+                            range_text = f"between ₹{price_range['min']} - ₹{price_range['max']}"
+                        elif price_range.get("max"):
+                            range_text = f"under ₹{price_range['max']}"
+                        elif price_range.get("min"):
+                            range_text = f"above ₹{price_range['min']}"
+                        
+                        return ChatResponse(
+                            message=f"💰 **Products {range_text}:**",
+                            products=products,
+                            options=get_display_options()[:6],
+                            type="products"
+                        )
+            
+            # If no price-specific products found, show price selection
+            return get_price_selection_response()
+        
+        # Handle category browsing
+        if category and category not in ["all", "price", "help"]:
+            # Fetch products for this category
+            products = await fetch_products_by_category(NODE_BACKEND_URL, category, limit=8)
+            
+            if products:
+                icon = get_category_icon(category)
+                return ChatResponse(
+                    message=f"{icon} **{category} Products:**\nHere's what we have in this category:",
+                    products=products,
+                    options=get_display_options()[:6],
+                    type="products",
+                    category=category
+                )
+            else:
+                # If no products in category, show all products
+                all_products = await fetch_all_products(NODE_BACKEND_URL, limit=8)
+                return ChatResponse(
+                    message=f"😕 No {category} products found. Here are all our products:",
+                    products=all_products,
+                    options=get_display_options()[:6],
+                    type="products"
+                )
+        
+        # Handle "Browse All" or "all" category
+        if category == "all" or "all" in request.message.lower() or "browse" in request.message.lower():
+            products = await fetch_all_products(NODE_BACKEND_URL, limit=10)
+            return ChatResponse(
+                message="📦 **All Products:**\nHere's our complete collection:",
+                products=products,
+                options=get_display_options()[:6],
+                type="products"
+            )
+        
+        # Default: Search or show all products
+        products = await fetch_all_products(NODE_BACKEND_URL, limit=8)
+        return ChatResponse(
+            message="🌟 **Popular Products:**\nHere are some items you might like:",
+            products=products,
+            options=get_display_options()[:6],
+            type="products"
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing message: {str(e)}", exc_info=True)
+        
+        # Return graceful error response
+        return ChatResponse(
+            message="😕 I'm having trouble processing your request. Please try again or browse our products directly.",
+            options=["Try Again", "Browse All", "Help"],
+            type="error"
+        )
+
+# ------------------- DEBUG & HEALTH ENDPOINTS -------------------
 @app.get("/")
 async def root():
+    """Root endpoint with API info"""
     return {
         "name": "Venus Enterprises AI Shopping Assistant",
-        "version": "5.0",
+        "version": "2.0.0",
         "status": "running",
-        "features": [
-            "Multi-turn conversations",
-            "Price range suggestions",
-            "Category navigation",
-            "Smart recommendations",
-            "Context awareness",
-            "Follow-up questions",
-            "Budget-based filtering",
-            "Corporate gift specialist"
-        ],
+        "endpoints": {
+            "chat": "/api/chat",
+            "health": "/health",
+            "debug": "/api/debug/connection"
+        },
         "node_backend": NODE_BACKEND_URL,
         "llm_status": "enabled" if HUGGINGFACE_TOKEN else "disabled"
     }
 
-# In your main.py, update the chat endpoint
-
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    try:
-        print(f"\n📨 [{datetime.now().strftime('%H:%M:%S')}] Session: {request.session_id}")
-        print(f"💬 Original message: '{request.message}'")
-        
-        # Import category mapper
-        from category_mapper import extract_category, get_display_options
-        
-        # Extract actual intent from message
-        category = extract_category(request.message)
-        print(f"📊 Extracted category: {category}")
-        
-        # Handle empty message (welcome)
-        if not request.message or request.message.strip() == "":
-            welcome_msg = """👋 Welcome to Venus Enterprises! I'm your AI shopping assistant.
-
-How can I help you today?"""
-            
-            return ChatResponse(
-                message=welcome_msg,
-                options=get_display_options(),
-                type="welcome"
-            )
-        
-        # Handle based on extracted category
-        if category == "help":
-            return ChatResponse(
-                message="❓ I can help you with:\n• Finding products by category\n• Checking prices\n• Corporate gift recommendations\n• Custom orders\n\nWhat would you like to know?",
-                options=get_display_options(),
-                type="help"
-            )
-        
-        elif category == "price_filter":
-            return ChatResponse(
-                message="💰 What's your budget? I'll find the best products for you.",
-                options=[
-                    "Under ₹500",
-                    "₹500 - ₹1000", 
-                    "₹1000 - ₹2500",
-                    "₹2500 - ₹5000",
-                    "Above ₹5000"
-                ],
-                type="price_selection"
-            )
-        
-        elif category == "all":
-            # Fetch all products
-            products = await search_products({})
-            if products:
-                return ChatResponse(
-                    message="📦 Here are all our products:",
-                    products=products[:8],
-                    options=["Filter by Price", "Browse Categories"],
-                    type="products"
-                )
-        
-        elif category in ["Wooden", "Acrylic", "Metal", "Crystal", "Corporate Gifts", "Awards"]:
-            # Fetch products for this category
-            print(f"🔍 Searching for category: {category}")
-            products = await search_products({"category": category})
-            
-            if products and len(products) > 0:
-                return ChatResponse(
-                    message=f"🎯 Here are our {category} items:",
-                    products=products[:8],
-                    options=[
-                        "🪵 Wooden",
-                        "✨ Acrylic", 
-                        "🏢 Corporate",
-                        "💰 Price Range"
-                    ],
-                    type="products"
-                )
-            else:
-                # If no products found, show popular items
-                popular = await search_products({})
-                return ChatResponse(
-                    message=f"😕 I couldn't find any {category} items at the moment. Here are some popular products instead:",
-                    products=popular[:6],
-                    options=get_display_options(),
-                    type="suggestions"
-                )
-        
-        # Handle price-based queries
-        if "under" in request.message.lower() and "₹" in request.message:
-            import re
-            price_match = re.search(r'under\s*₹?(\d+)', request.message.lower())
-            if price_match:
-                max_price = int(price_match.group(1))
-                products = await search_products({"price_range": {"max": max_price}})
-                
-                if products:
-                    return ChatResponse(
-                        message=f"💰 Great! Here are products under ₹{max_price}:",
-                        products=products[:8],
-                        options=[
-                            f"Under ₹{max_price//2}",
-                            f"Under ₹{max_price*2}",
-                            "Browse All"
-                        ],
-                        type="products"
-                    )
-        
-        # Default: use LLM to understand intent
-        intent = await llm.understand_intent(request.message)
-        
-        # Search for products
-        search_filters = {
-            "category": intent.get('category') or category,
-            "price_range": intent.get('price_range'),
-            "search": request.message
-        }
-        
-        products = await search_products(search_filters)
-        
-        if products:
-            return ChatResponse(
-                message=f"🎯 I found {len(products)} products matching your request:",
-                products=products[:8],
-                options=get_display_options(),
-                type="products"
-            )
-        else:
-            # No products found - show popular items
-            popular = await search_products({})
-            return ChatResponse(
-                message="😕 I couldn't find exact matches. Here are some popular items you might like:",
-                products=popular[:6],
-                options=get_display_options(),
-                type="suggestions"
-            )
-            
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Even on error, show popular products
-        try:
-            popular = await search_products({})
-            return ChatResponse(
-                message="I'm having trouble with your specific request. Here are some popular products:",
-                products=popular[:6] if popular else [],
-                options=get_display_options(),
-                type="suggestions"
-            )
-        except:
-            return ChatResponse(
-                message="I'm having trouble processing your request. Please try again.",
-                options=["Try Again", "Browse Products"],
-                type="error"
-            )
-
-@app.get("/api/session/{session_id}")
-async def get_session_state(session_id: str):
-    """Get current session state"""
-    session = assistant.get_or_create_session(session_id)
-    return {
-        "session_id": session_id,
-        "state": session.state.value,
-        "context": session.context,
-        "interaction_count": session.context["interaction_count"],
-        "preferences": session.context["preferences"]
-    }
-
-@app.post("/api/session/{session_id}/clear")
-async def clear_session(session_id: str):
-    """Clear session memory"""
-    if session_id in assistant.sessions:
-        del assistant.sessions[session_id]
-    return {"status": "cleared"}
-
 @app.get("/health")
 async def health():
+    """Health check endpoint"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "active_sessions": len(assistant.sessions),
         "node_backend": NODE_BACKEND_URL
     }
 
+@app.get("/api/debug/connection")
+async def debug_connection():
+    """Debug endpoint to test Node backend connection"""
+    import aiohttp
+    
+    results = {}
+    
+    async with aiohttp.ClientSession() as session:
+        # Test different endpoints
+        endpoints = [
+            "/products",
+            "/api/products",
+            "/api/v1/products",
+            "/products/all",
+            "/"
+        ]
+        
+        for endpoint in endpoints:
+            url = f"{NODE_BACKEND_URL}{endpoint}"
+            try:
+                async with session.get(url, timeout=5) as response:
+                    content_type = response.headers.get('content-type', '')
+                    try:
+                        if 'application/json' in content_type:
+                            data = await response.json()
+                            data_preview = str(data)[:200]
+                        else:
+                            data_preview = "Non-JSON response"
+                    except:
+                        data_preview = "Could not parse response"
+                    
+                    results[endpoint] = {
+                        "url": url,
+                        "status": response.status,
+                        "content_type": content_type,
+                        "success": response.status == 200,
+                        "data_preview": data_preview
+                    }
+            except Exception as e:
+                results[endpoint] = {
+                    "url": url,
+                    "error": str(e),
+                    "success": False
+                }
+    
+    return {
+        "node_backend": NODE_BACKEND_URL,
+        "tests": results,
+        "database_categories": ["Wooden", "Acrylic", "Metal", "Gifts", "Mementos", "Marble"],
+        "recommendation": "Check which endpoint returns 200 with JSON data"
+    }
+
+# ------------------- STARTUP/SHUTDOWN -------------------
+@app.on_event("startup")
+async def startup_event():
+    """Run on application startup"""
+    logger.info("🚀 Starting Venus AI Shopping Assistant...")
+    logger.info(f"📡 Node Backend: {NODE_BACKEND_URL}")
+    logger.info(f"🤖 LLM Status: {'✅ Enabled' if HUGGINGFACE_TOKEN else '❌ Disabled'}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Run on application shutdown"""
+    from fetch_products import _product_fetcher
+    if _product_fetcher:
+        await _product_fetcher.close()
+    logger.info("👋 Shutting down...")
+
+# ------------------- MAIN -------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    print(f"\n🚀 Starting Venus Enhanced AI Shopping Assistant...")
-    print(f"📡 Node Backend: {NODE_BACKEND_URL}")
-    print(f"🤖 LLM: {'Enabled' if HUGGINGFACE_TOKEN else 'Disabled'}")
-    print(f"🌐 Port: {port}\n")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=False,
+        log_level="info"
+    )

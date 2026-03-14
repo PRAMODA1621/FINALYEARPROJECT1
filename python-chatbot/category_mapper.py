@@ -1,144 +1,104 @@
 # category_mapper.py
-
 import re
+from typing import Optional, Dict, List
 
-# Master category mapping with all possible variations
-CATEGORY_MAPPING = {
-    # Wooden variations
-    "wooden": "Wooden",
-    "wood": "Wooden", 
-    "🪵": "Wooden",
-    "wooden items": "Wooden",
-    "wood items": "Wooden",
-    "wooden awards": "Wooden",
-    "wooden gifts": "Wooden",
-    "wood products": "Wooden",
-    
-    # Acrylic variations
-    "acrylic": "Acrylic",
-    "✨": "Acrylic",
-    "acrylic items": "Acrylic",
-    "acrylic awards": "Acrylic",
-    "acrylic gifts": "Acrylic",
-    "acrylic products": "Acrylic",
-    
-    # Metal variations
-    "metal": "Metal",
-    "⚙️": "Metal",
-    "metal awards": "Metal",
-    "metal trophies": "Metal",
-    "metal gifts": "Metal",
-    "metallic": "Metal",
-    
-    # Crystal variations
-    "crystal": "Crystal",
-    "💎": "Crystal",
-    "crystal awards": "Crystal",
-    "crystal trophies": "Crystal",
-    "glass": "Crystal",
-    "glass awards": "Crystal",
-    
-    # Corporate gifts variations
-    "corporate": "Corporate Gifts",
-    "🏢": "Corporate Gifts",
-    "corporate gifts": "Corporate Gifts",
-    "business gifts": "Corporate Gifts",
-    "office gifts": "Corporate Gifts",
-    "company gifts": "Corporate Gifts",
-    "promotional": "Corporate Gifts",
-    "promotional gifts": "Corporate Gifts",
-    
-    # Awards variations
-    "award": "Awards",
-    "awards": "Awards",
-    "🏆": "Awards",
-    "trophy": "Awards",
-    "trophies": "Awards",
-    "medal": "Awards",
-    "medals": "Awards",
-    "memento": "Awards",
-    "mementos": "Awards",
-    "plaques": "Awards",
-    "plaque": "Awards",
-    
-    # Price related
-    "price": "price_filter",
-    "💰": "price_filter",
-    "under": "price_filter",
-    "budget": "price_filter",
-    
-    # Help
-    "help": "help",
-    "❓": "help",
-    
-    # Browse all
-    "browse all": "all",
-    "all products": "all",
-    "show all": "all",
+# Map chatbot display categories to your database categories
+DATABASE_CATEGORIES = {
+    "Wooden": "Wooden",
+    "Acrylic": "Acrylic",
+    "Metal": "Metal",
+    "Gifts": "Gifts",
+    "Mementos": "Mementos",
+    "Marble": "Marble",
+    "Corporate Gifts": "Gifts",  # Map corporate gifts to Gifts category
+    "Awards": "Mementos",         # Map awards to Mementos category
+    "Crystal": "Gifts",           # Map crystal to Gifts category
 }
 
-# Display categories with their exact match strings
+# Display options with icons (what users see)
 DISPLAY_CATEGORIES = [
-    {"display": "🪵 Wooden Items", "category": "Wooden", "icon": "🪵"},
-    {"display": "✨ Acrylic Items", "category": "Acrylic", "icon": "✨"},
-    {"display": "⚙️ Metal Items", "category": "Metal", "icon": "⚙️"},
-    {"display": "💎 Crystal Items", "category": "Crystal", "icon": "💎"},
-    {"display": "🏢 Corporate Gifts", "category": "Corporate Gifts", "icon": "🏢"},
-    {"display": "🏆 Awards", "category": "Awards", "icon": "🏆"},
-    {"display": "💰 Price Range", "category": "price_filter", "icon": "💰"},
-    {"display": "❓ Help", "category": "help", "icon": "❓"},
-    {"display": "📦 Browse All", "category": "all", "icon": "📦"},
+    {"display": "🪵 Wooden Items", "category": "Wooden", "icon": "🪵", "db_category": "Wooden"},
+    {"display": "✨ Acrylic Items", "category": "Acrylic", "icon": "✨", "db_category": "Acrylic"},
+    {"display": "⚙️ Metal Items", "category": "Metal", "icon": "⚙️", "db_category": "Metal"},
+    {"display": "💎 Gifts", "category": "Gifts", "icon": "💎", "db_category": "Gifts"},
+    {"display": "🏢 Corporate Gifts", "category": "Corporate Gifts", "icon": "🏢", "db_category": "Gifts"},
+    {"display": "🏆 Awards", "category": "Awards", "icon": "🏆", "db_category": "Mementos"},
+    {"display": "🗿 Marble", "category": "Marble", "icon": "🗿", "db_category": "Marble"},
+    {"display": "💰 Price Range", "category": "price", "icon": "💰", "db_category": None},
+    {"display": "❓ Help", "category": "help", "icon": "❓", "db_category": None},
+    {"display": "📦 Browse All", "category": "all", "icon": "📦", "db_category": None},
 ]
 
-def clean_message(message):
-    """Remove emojis and clean the message"""
-    # Remove common emojis
-    emoji_pattern = re.compile("["
-        u"\U0001F600-\U0001F64F"  # emoticons
-        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-        u"\U0001F680-\U0001F6FF"  # transport & map symbols
-        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        u"\U00002702-\U000027B0"
-        u"\U000024C2-\U0001F251"
-        "]+", flags=re.UNICODE)
-    
-    cleaned = emoji_pattern.sub(r'', message)
-    return cleaned.strip().lower()
+# Emoji to category mapping
+EMOJI_MAP = {
+    "🪵": "Wooden",
+    "✨": "Acrylic",
+    "⚙️": "Metal",
+    "💎": "Gifts",
+    "🏢": "Corporate Gifts",
+    "🏆": "Awards",
+    "🗿": "Marble",
+    "💰": "price",
+    "❓": "help",
+    "📦": "all",
+}
 
-def extract_category(message):
-    """Extract category from any message format"""
+def extract_category(message: str) -> Optional[str]:
+    """
+    Extract category from user message
+    Handles both emoji and text inputs
+    """
     if not message:
         return None
     
-    # First try direct display match
+    message = message.strip()
+    
+    # Check for exact display match first
     for display_cat in DISPLAY_CATEGORIES:
         if message == display_cat["display"] or message.startswith(display_cat["icon"]):
             return display_cat["category"]
     
-    # Clean message (remove emojis)
-    cleaned = clean_message(message)
-    
-    # Check exact matches in mapping
-    if cleaned in CATEGORY_MAPPING:
-        return CATEGORY_MAPPING[cleaned]
-    
-    # Check partial matches
-    for key, category in CATEGORY_MAPPING.items():
-        if key in cleaned or cleaned in key:
+    # Check emoji mapping
+    for emoji, category in EMOJI_MAP.items():
+        if emoji in message:
             return category
     
+    # Check text content
+    message_lower = message.lower()
+    
+    # Direct category matches
+    if any(word in message_lower for word in ["wooden", "wood"]):
+        return "Wooden"
+    if any(word in message_lower for word in ["acrylic"]):
+        return "Acrylic"
+    if any(word in message_lower for word in ["metal"]):
+        return "Metal"
+    if any(word in message_lower for word in ["gift", "gifts", "corporate"]):
+        return "Corporate Gifts"
+    if any(word in message_lower for word in ["award", "awards", "trophy", "trophies"]):
+        return "Awards"
+    if any(word in message_lower for word in ["marble"]):
+        return "Marble"
+    if any(word in message_lower for word in ["price", "cost", "budget", "under", "₹"]):
+        return "price"
+    if any(word in message_lower for word in ["help", "support", "guide"]):
+        return "help"
+    if any(word in message_lower for word in ["all", "everything", "browse", "show"]):
+        return "all"
+    
     return None
 
-def get_display_options():
-    """Get formatted display options for the frontend"""
+def get_db_category(category: str) -> Optional[str]:
+    """Convert display category to database category"""
+    return DATABASE_CATEGORIES.get(category, category)
+
+def get_display_options() -> List[str]:
+    """Get all display options for the frontend"""
     return [cat["display"] for cat in DISPLAY_CATEGORIES]
 
-def get_category_from_display(display_text):
-    """Extract actual category from display text"""
+def get_category_icon(category: str) -> str:
+    """Get icon for a category"""
     for cat in DISPLAY_CATEGORIES:
-        if display_text == cat["display"]:
-            return cat["category"]
-        # Also check if it starts with the icon
-        if cat["icon"] in display_text:
-            return cat["category"]
-    return None
+        if cat["category"] == category:
+            return cat["icon"]
+    return "📦"
