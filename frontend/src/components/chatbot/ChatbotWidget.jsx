@@ -42,7 +42,6 @@ import {
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import chatbotApi from '../../api/chatbotApi';
-import keepAlive from '../../utils/keepAlive';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -226,7 +225,7 @@ const ChatbotWidget = () => {
         // Send to bot for processing
         sendMessageToBot(optionText);
     }
-  }, [handleRedirect, sendMessageToBot]);
+  }, [handleRedirect]);
 
   // Send message to bot
   const sendMessageToBot = useCallback(async (message) => {
@@ -236,9 +235,6 @@ const ChatbotWidget = () => {
     setIsWarming(true);
     
     try {
-      // Ping service before sending (wake up if needed)
-      keepAlive.ping(); // Changed from pingNow() to ping()
-      
       const response = await chatbotApi.sendMessage(message, sessionId);
       
       // Handle redirect responses
@@ -417,7 +413,6 @@ const ChatbotWidget = () => {
       <button
         onClick={() => {
           setIsOpen(!isOpen);
-          if (!isOpen) keepAlive.ping(); // Changed from pingNow() to ping()
         }}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-[#8B5A2B] to-[#9CAF88] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"
         aria-label="Toggle chat"
@@ -430,6 +425,7 @@ const ChatbotWidget = () => {
         )}
       </button>
 
+      {/* Rest of your component remains exactly the same... */}
       {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden">

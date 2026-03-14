@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -8,9 +8,6 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
-
-// Import keepAlive
-//import keepAlive from './utils/keepAlive';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -34,20 +31,8 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import WishlistPage from './pages/WishlistPage';
 import ProfilePage from './pages/ProfilePage';
 import CustomOrderPage from './pages/CustomOrderPage';
-// import OrdersPage from './pages/OrdersPage'; // COMMENT THIS OUT OR DELETE
 
 function App() {
-  // Initialize keepAlive when app mounts
-  //useEffect(() => {
-    // Start the keep-alive service
-    //keepAlive.start();
-    
-    // Clean up on unmount
-    //return () => {
-      //keepAlive.stop();
-    //};
-  //}, []);
-
   return (
     <HelmetProvider>
       <ErrorBoundary>
@@ -62,7 +47,6 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/products" element={<ProductPage />} />
               <Route path="/product/:name" element={<ProductDetailsPage />} />
-
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/helpdesk" element={<HelpdeskPage />} />
@@ -90,7 +74,6 @@ function App() {
               </Route>
 
               <Route path="/custom-order" element={<CustomOrderPage />} />
-
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
