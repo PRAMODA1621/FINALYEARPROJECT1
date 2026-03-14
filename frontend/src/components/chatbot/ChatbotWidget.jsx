@@ -27,24 +27,22 @@ import {
   FaClock,
   FaArrowRight,
   FaUser,
-  FaLock,
   FaSignInAlt,
   FaUserPlus,
   FaHeadset,
   FaQuestionCircle,
-  FaInfoCircle,
   FaTruck,
   FaUndo,
   FaShieldAlt,
   FaCreditCard,
   FaPalette,
-  FaUsers,
   FaBuilding,
   FaCalendarAlt
 } from 'react-icons/fa';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import chatbotApi from '../../api/chatbotApi';
+import keepAlive from '../../utils/keepAlive';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -55,6 +53,7 @@ const ChatbotWidget = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [connectionError, setConnectionError] = useState(false);
+  const [isWarming, setIsWarming] = useState(false);
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -64,12 +63,18 @@ const ChatbotWidget = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Initialize session once
+  // Initialize session
   useEffect(() => {
     setSessionId('session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
   }, []);
 
-  // Welcome message on mount
+  // Start keep-alive service
+  useEffect(() => {
+    keepAlive.start();
+    return () => keepAlive.stop();
+  }, []);
+
+  // Welcome message
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!messages.length) {
@@ -79,14 +84,12 @@ const ChatbotWidget = () => {
           sender: 'bot',
           timestamp: new Date(),
           options: [
-            { id: 'shop', label: '🛍️ Shop', action: 'category' },
+            { id: 'shop', label: '🛍️ Shop', action: 'shop' },
+            { id: 'custom', label: '✨ Custom Order', action: 'custom' },
             { id: 'price', label: '💰 Price', action: 'price' },
-            { id: 'gift', label: '🎯 Gift Finder', action: 'gift' },
-            { id: 'corporate', label: '🏢 Corporate', action: 'corporate' },
-            { id: 'custom', label: '✨ Custom', action: 'custom' },
             { id: 'help', label: '❓ Help', action: 'help' },
-            { id: 'login', label: '🔑 Login', action: 'login' },
-            { id: 'track', label: '📦 Track Order', action: 'track' }
+            { id: 'track', label: '📦 Track', action: 'track' },
+            { id: 'login', label: '🔑 Login', action: 'login' }
           ],
           type: 'welcome'
         }]);
@@ -95,7 +98,7 @@ const ChatbotWidget = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Scroll to bottom - optimized with requestAnimationFrame
+  // Scroll to bottom
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       requestAnimationFrame(() => {
@@ -115,170 +118,180 @@ const ChatbotWidget = () => {
     }
   }, [isOpen]);
 
-  // Memoized price formatter
+  // Format helpers
   const formatPrice = useCallback((price) => {
     return `₹${parseFloat(price).toLocaleString('en-IN')}`;
   }, []);
 
-  // Memoized time formatter
   const formatTime = useCallback((date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }, []);
 
-  // Handle navigation/redirects
-  const handleRedirect = useCallback((url, target = '_self') => {
-    if (target === '_blank') {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      navigate(url);
-    }
-  }, [navigate]);
+  // Handle redirects
+  const handleRedirect = useCallback((url) => {
+    window.location.href = url;
+  }, []);
 
   // Handle option clicks
   const handleOptionClick = useCallback((option) => {
+    const optionText = option.label || option;
+    const optionAction = option.action || option;
+    
+    // Add user message
     const userMessage = {
       id: Date.now(),
-      text: option.label || option,
+      text: optionText,
       sender: 'user',
       timestamp: new Date()
     };
     setMessages(prev => [...prev, userMessage]);
 
-    // Handle special actions
-    switch (option.action || option) {
+    // Handle special actions with redirects
+    switch (optionAction) {
+      case 'custom':
+      case '✨ Custom Order':
+      case 'custom-order':
+        handleRedirect('https://venus-frontend-guqs.onrender.com/custom-order');
+        break;
+      
       case 'login':
       case '🔑 Login':
-        handleRedirect('/login');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/login');
         break;
       
       case 'register':
       case '📝 Register':
-        handleRedirect('/register');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/register');
         break;
       
       case 'help':
       case '❓ Help':
       case 'helpdesk':
-        handleRedirect('/helpdesk');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/helpdesk');
         break;
       
       case 'track':
       case '📦 Track Order':
-        handleRedirect('/track-order');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/track-order');
         break;
       
       case 'contact':
       case '📞 Contact':
-        handleRedirect('/contact');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/contact');
         break;
       
       case 'cart':
       case '🛒 Cart':
-        handleRedirect('/cart');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/cart');
         break;
       
       case 'wishlist':
       case '❤️ Wishlist':
-        handleRedirect('/wishlist');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/wishlist');
         break;
       
       case 'profile':
       case '👤 Profile':
-        handleRedirect('/profile');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/profile');
         break;
       
       case 'orders':
       case '📋 Orders':
-        handleRedirect('/orders');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/orders');
         break;
       
       case 'whatsapp':
-        handleRedirect('https://wa.me/919876543210', '_blank');
+        window.open('https://wa.me/919876543210', '_blank');
         break;
       
       case 'email':
         window.location.href = 'mailto:support@venusenterprises.com';
         break;
       
-      case 'phone':
+      case 'call':
         window.location.href = 'tel:+919876543210';
         break;
       
       case 'map':
-        handleRedirect('https://maps.google.com/?q=Peenya+Industrial+Area+Bengaluru', '_blank');
+        window.open('https://maps.google.com/?q=Peenya+Industrial+Area+Bengaluru', '_blank');
         break;
       
       case 'faq':
-        handleRedirect('/faq');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/faq');
         break;
       
       case 'returns':
-        handleRedirect('/returns-policy');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/returns-policy');
         break;
       
       case 'shipping':
-        handleRedirect('/shipping-info');
-        break;
-      
-      case 'privacy':
-        handleRedirect('/privacy-policy');
-        break;
-      
-      case 'terms':
-        handleRedirect('/terms-conditions');
+        handleRedirect('https://venus-frontend-guqs.onrender.com/shipping-info');
         break;
       
       default:
         // Send to bot for processing
-        sendMessageToBot(option.label || option);
+        sendMessageToBot(optionText);
     }
   }, [handleRedirect]);
 
-  // Send message to bot - optimized
+  // Send message to bot
   const sendMessageToBot = useCallback(async (message) => {
     if (!message?.trim()) return;
     
     setIsTyping(true);
+    setIsWarming(true);
     
     try {
+      // Ping service before sending (wake up if needed)
+      await keepAlive.pingNow();
+      
       const response = await chatbotApi.sendMessage(message, sessionId);
+      
+      // Handle redirect responses
+      if (response.redirect) {
+        handleRedirect(response.redirect);
+        return;
+      }
       
       const botMessage = {
         id: Date.now(),
         text: response.message || "Here's what I found:",
         sender: 'bot',
         timestamp: new Date(),
-        options: response.options?.map(opt => typeof opt === 'string' ? { label: opt, action: opt } : opt) || [],
+        options: response.options || [],
         products: response.products || [],
         type: response.type || 'response'
       };
       
       setMessages(prev => [...prev, botMessage]);
       setConnectionError(false);
+      setIsWarming(false);
       
     } catch (error) {
       console.error('Chatbot error:', error);
       
       setMessages(prev => [...prev, {
         id: Date.now(),
-        text: "⚠️ **Connection Issue**\n\nPlease try again or contact support.",
+        text: "⚠️ **Connection Issue**\n\nPlease try again or use the options below.",
         sender: 'bot',
         timestamp: new Date(),
         options: [
-          { id: 'retry', label: '🔄 Retry', action: message },
-          { id: 'help', label: '❓ Help', action: 'help' },
-          { id: 'contact', label: '📞 Contact', action: 'contact' }
+          { id: 'retry', label: '🔄 Try Again', action: message },
+          { id: 'custom', label: '✨ Custom Order', action: 'custom' },
+          { id: 'help', label: '❓ Help', action: 'help' }
         ],
         type: 'error',
         isError: true
       }]);
       
       setConnectionError(true);
+      setIsWarming(false);
     } finally {
       setIsTyping(false);
     }
-  }, [sessionId]);
+  }, [sessionId, handleRedirect]);
 
+  // Handle send message
   const handleSendMessage = useCallback(() => {
     if (!inputMessage.trim() || isTyping) return;
 
@@ -294,6 +307,7 @@ const ChatbotWidget = () => {
     setInputMessage('');
   }, [inputMessage, isTyping, sendMessageToBot]);
 
+  // Handle key press
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -301,6 +315,7 @@ const ChatbotWidget = () => {
     }
   }, [handleSendMessage]);
 
+  // Handle add to cart
   const handleAddToCart = useCallback(async (product) => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to cart');
@@ -354,12 +369,13 @@ const ChatbotWidget = () => {
     }
   }, [isAuthenticated, addToCart]);
 
+  // Handle view product
   const handleViewProduct = useCallback((product) => {
     const productName = encodeURIComponent(product.name);
-    handleRedirect(`/product/${productName}`);
+    handleRedirect(`https://venus-frontend-guqs.onrender.com/product/${productName}`);
   }, [handleRedirect]);
 
-  // Memoized category icon getter
+  // Get category icon
   const getCategoryIcon = useCallback((category) => {
     const icons = {
       'Wooden': <FaTree className="text-amber-600" />,
@@ -374,11 +390,11 @@ const ChatbotWidget = () => {
     return icons[category] || <FaTag className="text-[#9CAF88]" />;
   }, []);
 
-  // Render message text with formatting
+  // Render message text
   const renderMessageText = useCallback((text) => {
     if (!text) return null;
     
-    // Bold text
+    // Split by bold markers
     const parts = text.split(/(\*\*.*?\*\*)/g);
     
     return parts.map((part, i) => {
@@ -389,13 +405,13 @@ const ChatbotWidget = () => {
     });
   }, []);
 
-  // Quick action buttons configuration
+  // Quick actions
   const quickActions = useMemo(() => [
-    { id: 'shop', label: '🛍️ Shop', icon: <FaGift />, action: 'category' },
+    { id: 'shop', label: '🛍️ Shop', icon: <FaGift />, action: 'shop' },
+    { id: 'custom', label: '✨ Custom', icon: <FaPalette />, action: 'custom' },
     { id: 'price', label: '💰 Price', icon: <FaTag />, action: 'price' },
     { id: 'gift', label: '🎯 Gift', icon: <FaGift />, action: 'gift' },
     { id: 'corporate', label: '🏢 Corporate', icon: <FaBuilding />, action: 'corporate' },
-    { id: 'custom', label: '✨ Custom', icon: <FaPalette />, action: 'custom' },
     { id: 'track', label: '📦 Track', icon: <FaTruck />, action: 'track' },
     { id: 'help', label: '❓ Help', icon: <FaHeadset />, action: 'help' },
     { id: 'login', label: '🔑 Login', icon: <FaSignInAlt />, action: 'login' }
@@ -405,7 +421,11 @@ const ChatbotWidget = () => {
     <>
       {/* Chat Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (!isOpen) keepAlive.pingNow();
+        }}
+        onMouseEnter={() => keepAlive.quickPing()}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-[#8B5A2B] to-[#9CAF88] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"
         aria-label="Toggle chat"
       >
@@ -431,7 +451,9 @@ const ChatbotWidget = () => {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold">Venus AI Assistant</h3>
-                <p className="text-xs opacity-90">Online • Ready to help</p>
+                <p className="text-xs opacity-90">
+                  {isWarming ? 'Waking up...' : 'Online • Ready to help'}
+                </p>
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
