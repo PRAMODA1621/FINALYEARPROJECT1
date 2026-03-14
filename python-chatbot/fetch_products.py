@@ -117,6 +117,10 @@ class ProductFetcher:
             product['in_stock'] = stock > 0
             product['stock_status'] = "In Stock" if stock > 10 else "Limited Stock" if stock > 0 else "Out of Stock"
             
+            # Ensure category is properly set
+            if not product.get('category'):
+                product['category'] = "General"
+            
             enhanced.append(product)
         
         return enhanced
@@ -138,10 +142,6 @@ class ProductFetcher:
         
         data = await self._make_request('/products', params)
         products = self._extract_products(data)
-        
-        # Filter by category if API doesn't support it
-        if products and not params.get('category'):
-            products = [p for p in products if p.get('category', '').lower() == db_category.lower()]
         
         return self._enhance_products(products[:limit])
     
@@ -170,29 +170,6 @@ class ProductFetcher:
         data = await self._make_request('/products', params)
         products = self._extract_products(data)
         
-        # Manual price filtering if API doesn't support it
-        if products and (min_price or max_price):
-            filtered = []
-            for p in products:
-                price = float(p.get('price', 0))
-                if min_price and price < min_price:
-                    continue
-                if max_price and price > max_price:
-                    continue
-                filtered.append(p)
-            products = filtered
-        
-        return self._enhance_products(products[:limit])
-    
-    async def search_products(self, query: str, limit: int = 10) -> List[Dict]:
-        """Search products by name/description"""
-        params = {
-            'search': query,
-            'limit': limit
-        }
-        
-        data = await self._make_request('/products/search', params)
-        products = self._extract_products(data)
         return self._enhance_products(products[:limit])
 
 # Global instance

@@ -1,7 +1,6 @@
 # main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import uvicorn
 import os
 import re
@@ -38,7 +37,7 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,17 +51,99 @@ PORT = int(os.getenv("PORT", 8000))
 logger.info(f"🚀 Node Backend URL: {NODE_BACKEND_URL}")
 logger.info(f"🤖 HuggingFace Token: {'✅ Set' if HUGGINGFACE_TOKEN else '❌ Not Set'}")
 
-# ------------------- MODELS -------------------
-class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None
+# ------------------- RESPONSE GENERATORS -------------------
+def get_welcome_response() -> Dict:
+    """Generate welcome message"""
+    return {
+        "message": """👋 Welcome to Venus Enterprises! I'm your AI shopping assistant.
 
-class ChatResponse(BaseModel):
-    message: str
-    options: List[str] = []
-    products: List[Dict[str, Any]] = []
-    type: str = "response"
-    category: Optional[str] = None
+I can help you find the perfect awards, gifts, and corporate merchandise from our collection.
+
+🔍 **Try asking:**
+• "Show me wooden awards"
+• "Gifts under ₹1000"
+• "Corporate gifts"
+• "Metal trophies"
+• "Browse all products"
+
+How can I assist you today?""",
+        "options": get_display_options(),
+        "type": "welcome",
+        "products": []
+    }
+
+def get_help_response() -> Dict:
+    """Generate help message"""
+    return {
+        "message": """❓ **How can I help you?**
+
+I can assist with:
+• 🪵 **Wooden Items** - Awards, plaques, name plates
+• ✨ **Acrylic Items** - Modern awards, signs, trophies
+• ⚙️ **Metal Items** - Pens, keychains, desk accessories
+• 💎 **Crystal Items** - Premium crystal awards
+• 🎁 **Gifts** - Corporate gifts, mementos
+• 🏢 **Corporate Gifts** - Bulk orders, customized
+• 🏆 **Awards** - Trophies, medals, plaques
+• 🗿 **Marble** - Premium marble awards
+• 💰 **Price Range** - Find products in your budget
+• 🚚 **Delivery Info** - Shipping and delivery
+
+Just click any option above or type what you're looking for!""",
+        "options": get_display_options(),
+        "type": "help",
+        "products": []
+    }
+
+def get_price_selection_response() -> Dict:
+    """Generate price selection options"""
+    return {
+        "message": "💰 **What's your budget?**\n\nSelect a price range to see products:",
+        "options": [
+            "Under ₹500",
+            "₹500 - ₹1000",
+            "₹1000 - ₹2500",
+            "₹2500 - ₹5000",
+            "Above ₹5000"
+        ],
+        "type": "price_selection",
+        "products": []
+    }
+
+def get_delivery_response() -> Dict:
+    """Generate delivery information response"""
+    return {
+        "message": """🚚 **Delivery Information**
+
+We offer reliable shipping across India:
+
+**Delivery Timeline:**
+• Metro Cities: 3-5 business days
+• Other Cities: 5-7 business days
+• Remote Areas: 7-10 business days
+
+**Shipping Charges:**
+• Free shipping on orders above ₹5000
+• Below ₹5000: ₹100 flat rate
+
+**Tracking:**
+• Tracking ID sent via email/SMS
+• Real-time tracking on our website
+
+**Bulk Orders:**
+• Special rates for corporate orders
+• Contact us for quotes
+
+Need more specific information? Let me know!""",
+        "options": [
+            "Track Order",
+            "Shipping Policy",
+            "Bulk Order Query",
+            "← Back to Products"
+        ],
+        "type": "info",
+        "products": []
+    }
 
 # ------------------- HELPER FUNCTIONS -------------------
 def extract_price_from_message(message: str) -> Optional[Dict[str, float]]:
@@ -93,128 +174,93 @@ def extract_price_from_message(message: str) -> Optional[Dict[str, float]]:
     
     return None
 
-# ------------------- RESPONSE GENERATORS -------------------
-def get_welcome_response() -> ChatResponse:
-    """Generate welcome message"""
-    return ChatResponse(
-        message="""👋 Welcome to Venus Enterprises! I'm your AI shopping assistant.
-
-I can help you find the perfect awards, gifts, and corporate merchandise from our collection.
-
-🔍 **Try asking:**
-• "Show me wooden awards"
-• "Gifts under ₹1000"
-• "Corporate gifts"
-• "Metal trophies"
-• "Browse all products"
-
-How can I assist you today?""",
-        options=get_display_options(),
-        type="welcome"
-    )
-
-def get_help_response() -> ChatResponse:
-    """Generate help message"""
-    return ChatResponse(
-        message="""❓ **How can I help you?**
-
-I can assist with:
-• 🪵 **Wooden Items** - Awards, plaques, name plates
-• ✨ **Acrylic Items** - Modern awards, signs, trophies
-• ⚙️ **Metal Items** - Pens, keychains, desk accessories
-• 💎 **Gifts** - Corporate gifts, mementos
-• 🏢 **Corporate Gifts** - Bulk orders, customized
-• 🏆 **Awards** - Trophies, medals, plaques
-• 🗿 **Marble** - Premium marble awards
-• 💰 **Price Range** - Find products in your budget
-
-Just click any option above or type what you're looking for!""",
-        options=get_display_options(),
-        type="help"
-    )
-
-def get_price_selection_response() -> ChatResponse:
-    """Generate price selection options"""
-    return ChatResponse(
-        message="💰 **What's your budget?**\n\nSelect a price range to see products:",
-        options=[
-            "Under ₹500",
-            "₹500 - ₹1000",
-            "₹1000 - ₹2500",
-            "₹2500 - ₹5000",
-            "Above ₹5000"
-        ],
-        type="price_selection"
-    )
-
 # ------------------- MAIN CHAT ENDPOINT -------------------
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+@app.post("/api/chat")
+async def chat(request: Request):
     """Main chat endpoint"""
     try:
-        logger.info(f"📨 Message: '{request.message}'")
+        # Parse request manually
+        body = await request.json()
+        message = body.get("message", "")
+        session_id = body.get("session_id")
+        
+        logger.info(f"📨 Message: '{message}'")
+        
+        # Handle back to products
+        if message == "← Back to Products" or message == "Back to Products":
+            products = await fetch_all_products(NODE_BACKEND_URL, limit=8)
+            return {
+                "message": "🌟 **Popular Products:**\nHere are some items you might like:",
+                "products": products,
+                "options": get_display_options()[:6],
+                "type": "products"
+            }
         
         # Handle empty message (welcome)
-        if not request.message or request.message.strip() == "":
+        if not message or message.strip() == "":
             return get_welcome_response()
         
         # Extract category from message
-        category = extract_category(request.message)
+        category = extract_category(message)
         logger.info(f"📊 Extracted category: {category}")
+        
+        # Handle delivery intent
+        if category == "delivery":
+            return get_delivery_response()
         
         # Handle help intent
         if category == "help":
             return get_help_response()
         
         # Handle price selection
-        if category == "price" or "under" in request.message.lower() or "₹" in request.message:
+        if category == "price" or "under" in message.lower() or "₹" in message:
             # Check if it's a price range selection
-            if request.message in ["Under ₹500", "₹500 - ₹1000", "₹1000 - ₹2500", "₹2500 - ₹5000", "Above ₹5000"]:
+            if message in ["Under ₹500", "₹500 - ₹1000", "₹1000 - ₹2500", "₹2500 - ₹5000", "Above ₹5000"]:
                 # Parse the selected range
-                if "Under" in request.message:
+                if "Under" in message:
                     max_price = 500
                     products = await fetch_products_by_price(NODE_BACKEND_URL, max_price=max_price, limit=8)
-                    return ChatResponse(
-                        message=f"💰 **Products under ₹{max_price}:**",
-                        products=products,
-                        options=get_display_options()[:6],
-                        type="products"
-                    )
-                elif "₹500 - ₹1000" in request.message:
+                    return {
+                        "message": f"💰 **Products under ₹{max_price}:**",
+                        "products": products,
+                        "options": get_display_options()[:6],
+                        "type": "products"
+                    }
+                elif "₹500 - ₹1000" in message:
                     products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=500, max_price=1000, limit=8)
-                    return ChatResponse(
-                        message="💰 **Products between ₹500 - ₹1000:**",
-                        products=products,
-                        options=get_display_options()[:6],
-                        type="products"
-                    )
-                elif "₹1000 - ₹2500" in request.message:
+                    return {
+                        "message": "💰 **Products between ₹500 - ₹1000:**",
+                        "products": products,
+                        "options": get_display_options()[:6],
+                        "type": "products"
+                    }
+                elif "₹1000 - ₹2500" in message:
                     products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=1000, max_price=2500, limit=8)
-                    return ChatResponse(
-                        message="💰 **Products between ₹1000 - ₹2500:**",
-                        products=products,
-                        options=get_display_options()[:6],
-                        type="products"
-                    )
-                elif "₹2500 - ₹5000" in request.message:
+                    return {
+                        "message": "💰 **Products between ₹1000 - ₹2500:**",
+                        "products": products,
+                        "options": get_display_options()[:6],
+                        "type": "products"
+                    }
+                elif "₹2500 - ₹5000" in message:
                     products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=2500, max_price=5000, limit=8)
-                    return ChatResponse(
-                        message="💰 **Products between ₹2500 - ₹5000:**",
-                        products=products,
-                        options=get_display_options()[:6],
-                        type="products"
-                    )
-                elif "Above ₹5000" in request.message:
+                    return {
+                        "message": "💰 **Products between ₹2500 - ₹5000:**",
+                        "products": products,
+                        "options": get_display_options()[:6],
+                        "type": "products"
+                    }
+                elif "Above ₹5000" in message:
                     products = await fetch_products_by_price(NODE_BACKEND_URL, min_price=5000, limit=8)
-                    return ChatResponse(
-                        message="💰 **Premium products above ₹5000:**",
-                        products=products,
-                        options=get_display_options()[:6],
-                        type="products"
-                    )
+                    return {
+                        "message": "💰 **Premium products above ₹5000:**",
+                        "products": products,
+                        "options": get_display_options()[:6],
+                        "type": "products"
+                    }
             else:
                 # Try to extract price from natural language
-                price_range = extract_price_from_message(request.message)
+                price_range = extract_price_from_message(message)
                 if price_range:
                     products = await fetch_products_by_price(
                         NODE_BACKEND_URL,
@@ -231,86 +277,71 @@ async def chat(request: ChatRequest):
                         elif price_range.get("min"):
                             range_text = f"above ₹{price_range['min']}"
                         
-                        return ChatResponse(
-                            message=f"💰 **Products {range_text}:**",
-                            products=products,
-                            options=get_display_options()[:6],
-                            type="products"
-                        )
+                        return {
+                            "message": f"💰 **Products {range_text}:**",
+                            "products": products,
+                            "options": get_display_options()[:6],
+                            "type": "products"
+                        }
             
             # If no price-specific products found, show price selection
             return get_price_selection_response()
         
         # Handle category browsing
-        if category and category not in ["all", "price", "help"]:
+        if category and category not in ["all", "price", "help", "delivery"]:
             # Fetch products for this category
             products = await fetch_products_by_category(NODE_BACKEND_URL, category, limit=8)
             
             if products:
                 icon = get_category_icon(category)
-                return ChatResponse(
-                    message=f"{icon} **{category} Products:**\nHere's what we have in this category:",
-                    products=products,
-                    options=get_display_options()[:6],
-                    type="products",
-                    category=category
-                )
+                return {
+                    "message": f"{icon} **{category} Products:**\nHere's what we have in this category:",
+                    "products": products,
+                    "options": get_display_options()[:6],
+                    "type": "products",
+                    "category": category
+                }
             else:
                 # If no products in category, show all products
                 all_products = await fetch_all_products(NODE_BACKEND_URL, limit=8)
-                return ChatResponse(
-                    message=f"😕 No {category} products found. Here are all our products:",
-                    products=all_products,
-                    options=get_display_options()[:6],
-                    type="products"
-                )
+                return {
+                    "message": f"😕 No {category} products found. Here are all our products:",
+                    "products": all_products,
+                    "options": get_display_options()[:6],
+                    "type": "products"
+                }
         
         # Handle "Browse All" or "all" category
-        if category == "all" or "all" in request.message.lower() or "browse" in request.message.lower():
+        if category == "all" or "all" in message.lower() or "browse" in message.lower():
             products = await fetch_all_products(NODE_BACKEND_URL, limit=10)
-            return ChatResponse(
-                message="📦 **All Products:**\nHere's our complete collection:",
-                products=products,
-                options=get_display_options()[:6],
-                type="products"
-            )
+            return {
+                "message": "📦 **All Products:**\nHere's our complete collection:",
+                "products": products,
+                "options": get_display_options()[:6],
+                "type": "products"
+            }
         
         # Default: Search or show all products
         products = await fetch_all_products(NODE_BACKEND_URL, limit=8)
-        return ChatResponse(
-            message="🌟 **Popular Products:**\nHere are some items you might like:",
-            products=products,
-            options=get_display_options()[:6],
-            type="products"
-        )
+        return {
+            "message": "🌟 **Popular Products:**\nHere are some items you might like:",
+            "products": products,
+            "options": get_display_options()[:6],
+            "type": "products"
+        }
         
     except Exception as e:
         logger.error(f"❌ Error processing message: {str(e)}", exc_info=True)
         
         # Return graceful error response
-        return ChatResponse(
-            message="😕 I'm having trouble processing your request. Please try again or browse our products directly.",
-            options=["Try Again", "Browse All", "Help"],
-            type="error"
-        )
+        return {
+            "message": "😕 I'm having trouble processing your request. Please try again or browse our products directly.",
+            "options": ["Try Again", "Browse All", "Help"],
+            "products": [],
+            "type": "error"
+        }
 
-# ------------------- DEBUG & HEALTH ENDPOINTS -------------------
-@app.get("/")
-async def root():
-    """Root endpoint with API info"""
-    return {
-        "name": "Venus Enterprises AI Shopping Assistant",
-        "version": "2.0.0",
-        "status": "running",
-        "endpoints": {
-            "chat": "/api/chat",
-            "health": "/health",
-            "debug": "/api/debug/connection"
-        },
-        "node_backend": NODE_BACKEND_URL,
-        "llm_status": "enabled" if HUGGINGFACE_TOKEN else "disabled"
-    }
-
+# ------------------- HEALTH CHECK -------------------
 @app.get("/health")
 async def health():
     """Health check endpoint"""
@@ -320,56 +351,19 @@ async def health():
         "node_backend": NODE_BACKEND_URL
     }
 
-@app.get("/api/debug/connection")
-async def debug_connection():
-    """Debug endpoint to test Node backend connection"""
-    import aiohttp
-    
-    results = {}
-    
-    async with aiohttp.ClientSession() as session:
-        # Test different endpoints
-        endpoints = [
-            "/products",
-            "/api/products",
-            "/api/v1/products",
-            "/products/all",
-            "/"
-        ]
-        
-        for endpoint in endpoints:
-            url = f"{NODE_BACKEND_URL}{endpoint}"
-            try:
-                async with session.get(url, timeout=5) as response:
-                    content_type = response.headers.get('content-type', '')
-                    try:
-                        if 'application/json' in content_type:
-                            data = await response.json()
-                            data_preview = str(data)[:200]
-                        else:
-                            data_preview = "Non-JSON response"
-                    except:
-                        data_preview = "Could not parse response"
-                    
-                    results[endpoint] = {
-                        "url": url,
-                        "status": response.status,
-                        "content_type": content_type,
-                        "success": response.status == 200,
-                        "data_preview": data_preview
-                    }
-            except Exception as e:
-                results[endpoint] = {
-                    "url": url,
-                    "error": str(e),
-                    "success": False
-                }
-    
+@app.get("/")
+async def root():
+    """Root endpoint with API info"""
     return {
+        "name": "Venus Enterprises AI Shopping Assistant",
+        "version": "2.0.0",
+        "status": "running",
+        "endpoints": {
+            "chat": "/api/chat",
+            "health": "/health"
+        },
         "node_backend": NODE_BACKEND_URL,
-        "tests": results,
-        "database_categories": ["Wooden", "Acrylic", "Metal", "Gifts", "Mementos", "Marble"],
-        "recommendation": "Check which endpoint returns 200 with JSON data"
+        "llm_status": "enabled" if HUGGINGFACE_TOKEN else "disabled"
     }
 
 # ------------------- STARTUP/SHUTDOWN -------------------
@@ -378,7 +372,6 @@ async def startup_event():
     """Run on application startup"""
     logger.info("🚀 Starting Venus AI Shopping Assistant...")
     logger.info(f"📡 Node Backend: {NODE_BACKEND_URL}")
-    logger.info(f"🤖 LLM Status: {'✅ Enabled' if HUGGINGFACE_TOKEN else '❌ Disabled'}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
