@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Keep Alive</title>
+</head>
+<body>
+    <script>
+        // Simple keep-alive script that runs in the background
+        const CHATBOT_URL = "https://finalyearproject1-1.onrender.com";
+        
+        function ping() {
+            fetch(`${CHATBOT_URL}/health`, { 
+                method: 'GET', 
+                mode: 'no-cors' 
+            }).catch(() => {});
+            
+            console.log('Keep-alive ping sent at', new Date().toLocaleTimeString());
+        }
+        
+        // Ping every 10 minutes
+        ping(); // Ping immediately
+        setInterval(ping, 10 * 60 * 1000);
+    </script>
+</body>
+</html>
