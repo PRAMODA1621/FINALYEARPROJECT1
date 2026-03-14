@@ -196,87 +196,46 @@ const ChatbotWidget = () => {
     setInputMessage('');
   };
 
-  // In ChatbotWidget.js, update handleOptionClick:
-
-const handleOptionClick = async (option) => {
-  console.log('Option clicked:', option);
-  
-  // Remove icon from option for sending to backend
-  const cleanOption = option.replace(/[🪵✨⚙️💎🏢🏆📦💰🎯]/g, '').trim();
-  
-  // Add user message
-  const userMessage = {
-    id: Date.now(),
-    text: option, // Show with icon in UI
-    sender: 'user',
-    timestamp: new Date()
-  };
-  
-  setMessages(prev => [...prev, userMessage]);
-  
-  // Send clean option to backend
-  await sendMessageToBot(cleanOption);
-};
-
-// Update sendMessageToBot to handle responses better:
-const sendMessageToBot = async (message) => {
-  setIsTyping(true);
-  
-  try {
-    const response = await chatbotApi.sendMessage(message, sessionId);
+  const handleOptionClick = (option) => {
+    console.log('Option clicked:', option);
     
-    // Process products if any
-    const enhancedProducts = response.products?.map(product => ({
-      ...product,
-      // Ensure image URL is valid
-      image_url: product.image_url || 
-                 `https://via.placeholder.com/300x300/9CAF88/8B5A2B?text=${encodeURIComponent(product.category || 'Product')}`
-    })) || [];
-    
-    const botMessage = {
-      id: Date.now(),
-      text: response.message || "Here's what I found:",
-      sender: 'bot',
-      timestamp: new Date(),
-      options: response.options || [],
-      products: enhancedProducts,
-      type: response.type || 'response',
-      followUp: response.follow_up
-    };
-    
-    setMessages(prev => [...prev, botMessage]);
-    
-    // If there's a follow-up question, add it as a separate bot message
-    if (response.follow_up) {
-      setTimeout(() => {
-        const followUpMessage = {
-          id: Date.now() + 1,
-          text: response.follow_up,
-          sender: 'bot',
-          timestamp: new Date(),
-          options: ['Yes', 'No', 'Tell me more'],
-          type: 'followup'
-        };
-        setMessages(prev => [...prev, followUpMessage]);
-      }, 1000);
+    // Handle special options
+    if (option === 'Retry') {
+      sendMessageToBot(messages[messages.length - 2]?.text || '');
+      return;
     }
     
-  } catch (error) {
-    console.error('Chat error:', error);
+    if (option === 'Contact Support') {
+      window.location.href = '/contact';
+      return;
+    }
     
-    // Show error but with helpful options
-    setMessages(prev => [...prev, {
+    if (option === 'Close') {
+      setIsOpen(false);
+      return;
+    }
+    
+    if (option === 'View Cart') {
+      navigate('/cart');
+      return;
+    }
+    
+    if (option === 'Continue Shopping') {
+      navigate('/products');
+      return;
+    }
+    
+    const userMessage = {
       id: Date.now(),
-      text: "😕 I'm having trouble connecting. You can still browse our products directly:",
-      sender: 'bot',
-      timestamp: new Date(),
-      options: ['🪵 Wooden', '✨ Acrylic', '🏢 Corporate', '💰 Under ₹500'],
-      type: 'error'
-    }]);
-  } finally {
-    setIsTyping(false);
-  }
-};
+      text: option,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    sendMessageToBot(option);
+  };
+
   const handleAddToCart = async (product) => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to cart');
