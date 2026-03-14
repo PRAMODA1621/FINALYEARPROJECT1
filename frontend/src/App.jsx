@@ -10,7 +10,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import ChatbotWidget from './components/chatbot/ChatbotWidget';
 
 // Import keepAlive
-import keepAlive from './utils/keepAlive';
+//import keepAlive from './utils/keepAlive';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -38,15 +38,15 @@ import CustomOrderPage from './pages/CustomOrderPage';
 
 function App() {
   // Initialize keepAlive when app mounts
-  useEffect(() => {
+  //useEffect(() => {
     // Start the keep-alive service
-    keepAlive.start();
+    //keepAlive.start();
     
     // Clean up on unmount
-    return () => {
-      keepAlive.stop();
-    };
-  }, []);
+    //return () => {
+      //keepAlive.stop();
+    //};
+  //}, []);
 
   return (
     <HelmetProvider>

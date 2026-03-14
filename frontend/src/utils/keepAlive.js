@@ -1,33 +1,22 @@
-// src/utils/keepAlive.js
+// src/utils/keepAlive.js - ULTRA SIMPLE VERSION
+// No complex logic, no circular dependencies
+
 const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || "https://finalyearproject1-1.onrender.com";
 
+// Simple object with methods
 const keepAlive = {
-  interval: null,
-  
   start: () => {
-    if (keepAlive.interval) return;
-    
-    console.log('🌐 Starting keep-alive...');
-    keepAlive.ping();
-    keepAlive.interval = setInterval(keepAlive.ping, 13 * 60 * 1000);
-  },
-  
-  ping: async () => {
-    try {
-      await fetch(`${CHATBOT_URL}/health`, { 
-        method: 'GET', 
-        mode: 'no-cors' 
-      });
-    } catch (error) {
-      // Silent fail
-    }
+    console.log('Keep-alive started');
+    // Don't do anything complex - let the first user request wake it up
   },
   
   stop: () => {
-    if (keepAlive.interval) {
-      clearInterval(keepAlive.interval);
-      keepAlive.interval = null;
-    }
+    console.log('Keep-alive stopped');
+  },
+  
+  ping: () => {
+    // Optional: silent ping in background
+    fetch(`${CHATBOT_URL}/health`, { mode: 'no-cors' }).catch(() => {});
   }
 };
 
