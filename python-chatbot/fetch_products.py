@@ -219,3 +219,39 @@ async def get_popular_categories(node_backend_url: str) -> List[str]:
             popular.append(cat['name'])
     
     return popular
+async def get_product_recommendations(
+    node_backend_url: str,
+    product_id: Optional[str] = None,
+    category: Optional[str] = None,
+    price: Optional[float] = None,
+    limit: int = 4
+) -> List[Dict]:
+    """Get intelligent product recommendations"""
+    
+    try:
+        if product_id:
+            # Try to get similar products based on current product
+            url = f"{node_backend_url}/api/products/{product_id}/similar"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{url}?limit={limit}", timeout=10) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if isinstance(data, dict):
+                            return data.get('products', []) or data.get('data', [])
+                        elif isinstance(data, list):
+                            return data
+        
+        # Fallback: get products in same category or price range
+        filters = {}
+        if category:
+            filters['category'] = category
+        if price:
+            # Get products within 30% of price
+            filters['minPrice'] = price * 0.7
+            filters['maxPrice'] = price * 1.3
+        
+        return await fetch_products_with_filters(node_backend_url, **filters, limit=limit)
+    
+    except Exception as e:
+        print(f"❌ Recommendations error: {e}")
+        return []
