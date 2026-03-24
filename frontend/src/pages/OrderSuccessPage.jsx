@@ -41,7 +41,7 @@ const OrderSuccessPage = () => {
                 Order Number: <span className="font-semibold text-gray-900">{orderNumber}</span>
               </p>
               <p className="text-gray-600">
-                Total Amount: <span className="font-semibold text-gray-900">${total?.toFixed(2)}</span>
+                Total Amount: <span className="font-semibold text-gray-900">₹{total?.toFixed(2)}</span>
               </p>
               <p className="text-gray-600">
                 A confirmation email has been sent to your email address.
