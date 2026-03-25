@@ -17,7 +17,7 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const helpdeskRoutes = require("./routes/helpdeskRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
-
+const contactRoutes = require("./routes/contactRoutes");
 const app = express();
 
 
@@ -105,7 +105,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/helpdesk", helpdeskRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/reviews", reviewRoutes);
-
+app.use("/api/contact", contactRoutes);
 
 // ---------------------
 // SERVE REACT FRONTEND

@@ -20,13 +20,23 @@ const ContactPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      toast.success("Message sent successfully!");
       setFormData({
         name: '',
         email: '',
@@ -34,9 +44,16 @@ const ContactPage = () => {
         subject: '',
         message: ''
       });
-      setSubmitting(false);
-    }, 1500);
-  };
+    } else {
+      toast.error(data.message || "Failed to send message");
+    }
+
+  } catch (error) {
+    toast.error("Server error");
+  }
+
+  setSubmitting(false);
+};
 
   return (
     <>
