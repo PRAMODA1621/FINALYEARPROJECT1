@@ -25,7 +25,7 @@ const ContactPage = () => {
   setSubmitting(true);
 
   try {
-    const res = await fetch("http://localhost:5000/api/contact", {
+    const res = await fetch("https://finalyearproject1-pvex.onrender.com/api/contact", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
