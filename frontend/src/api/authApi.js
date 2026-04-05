@@ -11,7 +11,7 @@ const authApi = {
         password: userData.password,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        phone: userData.phone || ''
+        phone: (userData.phone && { phone: userData.phone })
       });
       
       console.log('📦 Register API response:', response.data);

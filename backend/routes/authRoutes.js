@@ -10,8 +10,7 @@ const registerValidation = [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('firstName').notEmpty().trim().withMessage('First name is required'),
   body('lastName').notEmpty().trim().withMessage('Last name is required'),
-  body('phone').optional().isMobilePhone('any').withMessage('Please provide a valid phone number')
-];
+body('phone').optional({ checkFalsy: true }).isMobilePhone('any')];
 
 // Validation rules for login
 const loginValidation = [
